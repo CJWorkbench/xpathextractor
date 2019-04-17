@@ -15,12 +15,12 @@ parameters:
       type: list
       child_parameters:
         - id_name: colxpath
-          name: "Column selector"
+          name: ""
           type: string
           placeholder: "xpath which selects a column value"
           default: './@href'
         - id_name: colname
-          name: "Column name"
+          name: "Store in column"
           placeholder: "name of extracted column"
           type: string
           default: "URL"
