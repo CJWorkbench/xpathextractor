@@ -128,13 +128,17 @@ def add_rows_by_zip(tree, colselectors, outtable):
     return (outtable, warn_user)
 
 
-def render(params, table):
+def render(table, params):
 
     inputcol = 'html'    # hardcode to enable Quick Fix suggestion to add Scrape HTML
 
     rowxpath = params['rowxpath']
 
     colselectors = params['colselectors']
+    # print('------ CCC -------')
+    # print(params)
+    # print('------ CCC -------')
+
     outcolnames = [c['colname'] for c in colselectors]
     if '' in outcolnames:
         return 'Missing column name'

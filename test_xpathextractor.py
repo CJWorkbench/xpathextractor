@@ -181,7 +181,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'.', 'colname':'Text'},
                 {'colxpath':'./@href', 'colname':'URL'},
             ]}
-        out = render(params, self.table)
+        out = render(self.table, params)
         expected = pd.DataFrame({
                 'Text':['Orange link','Red no href', 'Blue link'],
                 'URL':['http://orange.com','', 'http://blue.com']
@@ -203,7 +203,7 @@ class XpathExtractorTest(unittest.TestCase):
                 'Description':['A description','B description', 'C description D description']
             })
 
-        out = render(params, self.table)
+        out = render(self.table, params)
         assert_frame_equal(out, expected)
 
     def test_no_rowxpath(self):
@@ -220,7 +220,7 @@ class XpathExtractorTest(unittest.TestCase):
                 'Description':['A description','B description', 'C description', 'D description']
             })
 
-        out = render(params, self.table)
+        out = render(self.table, params)
         self.assertTrue(isinstance(out, tuple)) 
         self.assertTrue(isinstance(out[1], str)) # warning message
         assert_frame_equal(out[0], expected)
@@ -233,7 +233,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'', 'colname':'Title'},
                 {'colxpath':'p', 'colname':'Description'},
             ]}
-        out = render(params, self.table)
+        out = render(self.table, params)
 
         self.assertTrue(isinstance(out, str)) # error message
 
@@ -245,7 +245,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'.', 'colname':'Title'},
                 {'colxpath':'p', 'colname':''},
             ]}
-        out = render(params, self.table)
+        out = render(self.table, params)
 
         self.assertTrue(isinstance(out,str)) # error message
 
