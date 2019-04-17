@@ -10,12 +10,12 @@ parameters:
       type: "string"
       placeholder: "xpath which selects elements containing data for one row "
       default: '//a'
-    - name: "Column selectors"
+    - name: ""
       id_name: colselectors
       type: list
       child_parameters:
         - id_name: colxpath
-          name: ""
+          name: "Column selector"
           type: string
           placeholder: "xpath which selects a column value"
           default: './@href'
