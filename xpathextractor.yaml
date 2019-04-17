@@ -1,0 +1,26 @@
+name: "Extract with Xpath"
+id_name: "xpathextractor"
+category: "Scrape"
+icon: "transform"
+description: "Extract a table from an HTML scrape using xpath"
+help_url: "modules/add-data/paste-data"
+parameters:
+    - name: "Record selector"
+      id_name: "rowxpath"
+      type: "string"
+      placeholder: "xpath which selects elements containing data for one row "
+      default: '//a'
+    - name: "Column selectors"
+      id_name: colselectors
+      type: list
+      child_parameters:
+        - id_name: colxpath
+          name: "Column selector"
+          type: string
+          placeholder: "xpath which selects a column value"
+          default: './@href'
+        - id_name: colname
+          name: "Column name"
+          placeholder: "name of extracted column"
+          type: string
+          default: "URL"
