@@ -112,7 +112,21 @@ def add_rows_by_zip(tree, colselectors, outtable):
 
 def render(table, params):
 
-    inputcol = 'html'    # hardcode to enable Quick Fix suggestion to add Scrape HTML
+    # Suggest quickfix of adding Scrape HTML if 'html' col not found
+    inputcol = 'html'    
+    if (table is None) or (inputcol not in table.columns):
+        return {
+            'error': "No 'html' column found. Do you need to scrape?",
+            'quick_fixes': [{
+                'text': 'Add HTML scraper',
+                'action': 'prependModule',
+                'args': [
+                    'urlscraper',
+                    {}
+                ],
+            }]
+        }
+
     colselectors = params['colselectors']
 
     outcolnames = [c['colname'] for c in colselectors]
