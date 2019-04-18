@@ -171,42 +171,7 @@ class XpathExtractorTest(unittest.TestCase):
         self.table = pd.DataFrame({'html':[doc1, doc2]})
 
 
-    def test_extract_links(self):
-        # This is the default parameter setting. 
-        # - Should pick up rows only from doc2, as doc1 has no <a>
-        # - Should work even though second link has no URL
-        params = { 
-            'rowxpath':'//a', 
-            'colselectors' : [
-                {'colxpath':'.', 'colname':'Text'},
-                {'colxpath':'./@href', 'colname':'URL'},
-            ]}
-        out = render(self.table, params)
-        expected = pd.DataFrame({
-                'Text':['Orange link','Red no href', 'Blue link'],
-                'URL':['http://orange.com','', 'http://blue.com']
-            })
-        assert_frame_equal(out, expected)
-
-    def test_multiple_colvals_multiple_pages(self):
-        # Find elements within multiple pages.
-        # In this test data, some records have multiply defined column values, 
-        # which should be concatenated with spaces between
-        params = { 
-            'rowxpath':'//li', 
-            'colselectors' : [
-                {'colxpath':'h1', 'colname':'Title'},
-                {'colxpath':'p', 'colname':'Description'},
-            ]}
-        expected = pd.DataFrame({
-                'Title':['A title', 'B title', 'C title'],
-                'Description':['A description','B description', 'C description D description']
-            })
-
-        out = render(self.table, params)
-        assert_frame_equal(out, expected)
-
-    def test_no_rowxpath(self):
+    def test_multiple_column_xpaths(self):
         # Use the "zip" extraction algorithm. Should pad all columns to same length 
         # if needed, and give a warning if we did.
         params = { 

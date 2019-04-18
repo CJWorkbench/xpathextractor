@@ -85,26 +85,8 @@ def select(tree: etree._Element, selector: etree.XPath) -> List[str]:
         return [result]
 
 
-# Extract as many rows as there are elements mathing the record selector
-def add_rows_by_record(tree, rowxpath_string, colselectors, outtable):
-    rowxpath = xpath(rowxpath_string)
-    row_els = rowxpath(tree)
-
-    for el in row_els:
-        newrow = {}       
-        for col in colselectors:
-            colvals = select(el, xpath(col['colxpath']))
-
-            # If we have more than one element matching the column selector,
-            # just concatenate with spaces. If we have zero, empty column.
-            newrow[col['colname']] = (' ').join(colvals)
-
-        outtable = outtable.append(newrow, ignore_index=True)
-
-    return outtable
-
-# Extract columns separately, then zip them together. This is a weaker, potentially
-# more error-prone method, but also simpler for the user to set up
+# Extract columns separately, then zip them together. 
+# This essentially the IMPORTXML method
 def add_rows_by_zip(tree, colselectors, outtable):
     column_lists = {}
     maxlen = 0
@@ -131,13 +113,7 @@ def add_rows_by_zip(tree, colselectors, outtable):
 def render(table, params):
 
     inputcol = 'html'    # hardcode to enable Quick Fix suggestion to add Scrape HTML
-
-    rowxpath = params['rowxpath']
-
     colselectors = params['colselectors']
-    # print('------ CCC -------')
-    # print(params)
-    # print('------ CCC -------')
 
     outcolnames = [c['colname'] for c in colselectors]
     if '' in outcolnames:
@@ -157,14 +133,11 @@ def render(table, params):
         tree = parse_document(html_text, True) # is_html=true 
 
         try:
-            if rowxpath != '':
-                outtable = add_rows_by_record(tree, rowxpath, colselectors, outtable)
-            else:
-                outtable,warn = add_rows_by_zip(tree, colselectors, outtable)
+            outtable,warn = add_rows_by_zip(tree, colselectors, outtable)
 
-                # track the first row where the extracted columns are not all the same length
-                if warn and not first_different_length_row: 
-                    first_different_length_row = index
+            # track the first row where the extracted columns are not all the same length
+            if warn and not first_different_length_row: 
+                first_different_length_row = index
 
         except etree.XPathEvalError as err:
             return (None, 'XPath error: %s' % err)
