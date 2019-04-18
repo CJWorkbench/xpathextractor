@@ -3,13 +3,8 @@ id_name: "xpathextractor"
 category: "Scrape"
 icon: "transform"
 description: "Extract a table from an HTML scrape using xpath"
-help_url: "modules/add-data/paste-data"
+help_url: "modules/scrape/xpathextractor"
 parameters:
-    - name: "Record selector"
-      id_name: "rowxpath"
-      type: "string"
-      placeholder: "xpath which selects elements containing data for one row "
-      default: '//a'
     - name: ""
       id_name: colselectors
       type: list
@@ -17,10 +12,8 @@ parameters:
         - id_name: colxpath
           name: "Column selector"
           type: string
-          placeholder: "xpath which selects a column value"
-          default: './@href'
+          placeholder: "Enter xpath selector"
         - id_name: colname
-          name: "Store in column"
-          placeholder: "name of extracted column"
+          name: "Column name"
           type: string
-          default: "URL"
+          placeholder: "Enter column name"
