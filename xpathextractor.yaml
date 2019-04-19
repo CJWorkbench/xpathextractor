@@ -3,7 +3,7 @@ id_name: "xpathextractor"
 category: "Scrape"
 icon: "transform"
 description: "Extract a table from an HTML scrape using xpath"
-help_url: "modules/scrape/xpathextractor"
+help_url: "modules/scrape/xpath-extractor"
 parameters:
     - name: ""
       id_name: colselectors
