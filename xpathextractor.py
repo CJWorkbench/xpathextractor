@@ -93,19 +93,16 @@ def add_rows_by_zip(tree, colselectors, outtable):
     for col in colselectors:
         colvals = select(tree, xpath(col['colxpath']))
         maxlen = max(maxlen, len(colvals))
-        column_lists[col['colname']] = colvals
+        column_lists[col['colname']] = pd.Series(colvals)
 
-    # Pad all column lists to the same length with None
+    # Pad all column lists to the same length
+    # DataFrame constructor will automatically do this if given Series
+    newrows = pd.DataFrame(column_lists, columns=outtable.columns)
+
     # If they're not all the same length, this may mean extraction failed. 
     # Let the user see the data, and give them a warning
-    warn_user = False
-    for colname,colvals in column_lists.items():
-        padding = (maxlen-len(colvals))
-        if padding>0:
-            warn_user = True
-            column_lists[colname] += [None] * padding
+    warn_user = (len(set(len(v) for v in column_lists.values())) != 1)
 
-    newrows = pd.DataFrame(column_lists, columns=outtable.columns)
     outtable = pd.concat([outtable, newrows], axis=0).reset_index(drop=True)
     return (outtable, warn_user)
 
@@ -114,7 +111,7 @@ def render(table, params):
 
     # Suggest quickfix of adding Scrape HTML if 'html' col not found
     inputcol = 'html'    
-    if (table is None) or (inputcol not in table.columns):
+    if inputcol not in table.columns:
         return {
             'error': "No 'html' column found. Do you need to scrape?",
             'quick_fixes': [{

@@ -104,76 +104,74 @@ class Html1(unittest.TestCase):
 
 
 class XpathExtractorTest(unittest.TestCase):
-    def setUp(self):
-        doc1 = '''    
-        <!DOCTYPE html><html>
-          <head>
-            <meta charset="utf-16be">
-            <title>Scrape me please</title>
-            <link rel="stylesheet" href="/style.css"/>
-            <script src="/script.js"></script>
-          </head>
-          <body>
-            <h2>This is outside the l1</h2>
-            <img src="/logo.png" alt="logo" />
-            <ul>
-                <li>
-                    <h1>A title</h1>
-                    <p>A description</p>
-                </li>
-                <li>
-                    <h1>B title</h1>
-                    <p>B description</p>
-                </li>
-            </ul>
-          </body>'''
 
-        doc2 = '''     
-        <!DOCTYPE html><html>
-          <head>
-            <meta charset="utf-16be">
-            <title>Link scraping test</title>
-            <link rel="stylesheet" href="/style.css"/>
-            <script src="/script.js"></script>
-          </head>
-          <body>
-            <img src="/logo.png" alt="logo" />
-            <ul>
-                <li>
-                    <h1>C title</h1>
-                    <p>C description</p>
-                    <p>D description</p>
-                </li>
-            </ul>   
-            <table>
-                <tr>
-                    <th>Name<th>
-                    <th>link<th>
-                </tr>
-                <tr>
-                    <td>Orange<td>
-                    <td><a href='http://orange.com'>Orange link</a></td>
-                </tr>
-                <tr>
-                    <td>Red<td>
-                    <td><a>Red no href</a></td>
-                </tr>
-                <tr>
-                    <td>Blue<td>
-                    <td><a href='http://blue.com'>Blue link</a></td>
-                </tr>
-            </table>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2">
-              <path d="M0 0L2 2"/>
-            </svg>
-          </body>'''
-
-        self.table = pd.DataFrame({'html':[doc1, doc2]})
-
-
-    def test_multiple_column_xpaths(self):
+    def test_multiple_columns_unequal_lengths(self):
         # Use the "zip" extraction algorithm. Should pad all columns to same length 
         # if needed, and give a warning if we did.
+
+        doc1 = '''    
+            <!DOCTYPE html><html>
+              <head>
+                <meta charset="utf-16be">
+                <title>Scrape me please</title>
+                <link rel="stylesheet" href="/style.css"/>
+                <script src="/script.js"></script>
+              </head>
+              <body>
+                <h2>This is outside the l1</h2>
+                <img src="/logo.png" alt="logo" />
+                <ul>
+                    <li>
+                        <h1>A title</h1>
+                        <p>A description</p>
+                    </li>
+                    <li>
+                        <h1>B title</h1>
+                        <p>B description</p>
+                    </li>
+                </ul>
+              </body>'''
+
+        doc2 = '''     
+            <!DOCTYPE html><html>
+              <head>
+                <meta charset="utf-16be">
+                <title>Link scraping test</title>
+                <link rel="stylesheet" href="/style.css"/>
+                <script src="/script.js"></script>
+              </head>
+              <body>
+                <img src="/logo.png" alt="logo" />
+                <ul>
+                    <li>
+                        <h1>C title</h1>
+                        <p>C description</p>
+                        <p>D description</p>
+                    </li>
+                </ul>   
+                <table>
+                    <tr>
+                        <th>Name<th>
+                        <th>link<th>
+                    </tr>
+                    <tr>
+                        <td>Orange<td>
+                        <td><a href='http://orange.com'>Orange link</a></td>
+                    </tr>
+                    <tr>
+                        <td>Red<td>
+                        <td><a>Red no href</a></td>
+                    </tr>
+                    <tr>
+                        <td>Blue<td>
+                        <td><a href='http://blue.com'>Blue link</a></td>
+                    </tr>
+                </table>
+              </body>'''
+
+        table = pd.DataFrame({'html':[doc1, doc2]})
+
+
         params = { 
             'rowxpath':'', 
             'colselectors' : [
@@ -185,10 +183,11 @@ class XpathExtractorTest(unittest.TestCase):
                 'Description':['A description','B description', 'C description', 'D description']
             })
 
-        out = render(self.table, params)
+        out = render(table, params)
         self.assertTrue(isinstance(out, tuple)) 
         self.assertTrue(isinstance(out[1], str)) # warning message
         assert_frame_equal(out[0], expected)
+
 
     def test_empty_colselector(self):
         # missing xpath should error
@@ -198,9 +197,10 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'', 'colname':'Title'},
                 {'colxpath':'p', 'colname':'Description'},
             ]}
-        out = render(self.table, params)
+        out = render(pd.DataFrame({'html':['<p>foo</p>']}), params)
 
         self.assertTrue(isinstance(out, str)) # error message
+
 
     def test_empty_colname(self):
         # missing column name should error
@@ -210,7 +210,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'.', 'colname':'Title'},
                 {'colxpath':'p', 'colname':''},
             ]}
-        out = render(self.table, params)
+        out = render(pd.DataFrame({'html':['<p>foo</p>']}), params)
 
         self.assertTrue(isinstance(out,str)) # error message
 
