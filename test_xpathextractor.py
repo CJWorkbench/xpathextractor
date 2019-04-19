@@ -179,13 +179,15 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'//p', 'colname':'Description'},
             ]}
         expected = pd.DataFrame({
-                'Title':['A title', 'B title', 'C title', None],
-                'Description':['A description','B description', 'C description', 'D description']
-            })
+            'Title':['A title', 'B title', 'C title', None],
+            'Description':['A description','B description', 'C description', 'D description']
+        })
 
         out = render(table, params)
-        self.assertTrue(isinstance(out, tuple))
-        self.assertTrue(isinstance(out[1], str)) # warning message
+        assert_frame_equal(out[0], expected)
+        self.assertEqual(out[1], (
+            'Extracted columns of differing lengths from HTML on row 2'
+        ))
 
     def test_bad_html(self):
         params = {
@@ -196,9 +198,7 @@ class XpathExtractorTest(unittest.TestCase):
         # so let's just test that _something_ comes out....
         out = render(pd.DataFrame({'html':['<a', '<html><body>x</head></html>']}),
                      params)
-        assert_frame_equal(out, pd.DataFrame({
-            'Body': ['x'],
-        }))
+        assert_frame_equal(out, pd.DataFrame({'Body': ['x']}))
 
     def test_empty_input_table(self):
         # No rows in, no rows out (but output the columns the user has specified)
@@ -208,18 +208,19 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'p', 'colname':'Description'},
             ]}
         out = render(pd.DataFrame({'html':[]}), params)
-        assert_frame_equal(out, pd.DataFrame(columns=['Title','Description']))
-        assert_frame_equal(out[0], expected)
+        expected = pd.DataFrame({'Title': [], 'Description': []}, dtype=str)
+        assert_frame_equal(out, expected)
 
-    def test_empty_input_table(self):
+    def test_parse_null(self):
         # No rows in, no rows out (but output the columns the user has specified)
         params = {
             'colselectors' : [
-                {'colxpath':'h1', 'colname':'Title'},
-                {'colxpath':'p', 'colname':'Description'},
-            ]}
-        out = render(pd.DataFrame({'html':[]}), params)
-        assert_frame_equal(out, pd.DataFrame(columns=['Title','Description']))
+                {'colxpath':'//body', 'colname': 'A'},
+            ]
+        }
+        out = render(pd.DataFrame({'html': [None]}, dtype=str), params)
+        expected = pd.DataFrame({'A': []}, dtype=str)
+        assert_frame_equal(out, expected)
 
     def test_empty_colselector(self):
         # missing xpath should error
@@ -229,8 +230,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'p', 'colname':'Description'},
             ]}
         out = render(pd.DataFrame({'html':['<p>foo</p>']}), params)
-
-        self.assertTrue(isinstance(out, str)) # error message
+        self.assertEqual(out, 'Missing column selector')
 
     def test_empty_colname(self):
         # missing column name should error
@@ -241,8 +241,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'p', 'colname':''},
             ]}
         out = render(table, params)
-
-        self.assertTrue(isinstance(out,str)) # error message
+        self.assertEqual(out, 'Missing column name')
 
     def test_duplicate_colname(self):
         table = pd.DataFrame({'html':['<p>foo</p>']})
@@ -252,8 +251,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'//p', 'colname':'Title'},
             ]}
         out = render(table, params)
-        self.assertTrue(isinstance(out,str)) # error message
-        self.assertTrue('Title' in out) # error message contains correct column name
+        self.assertEqual(out, 'Duplicate column name "Title"')
 
     def test_bad_xpath(self):
         table = pd.DataFrame({'html':['<p>foo</p>']})
@@ -263,9 +261,31 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'p', 'colname':'Description'},
             ]}
         out = render(table, params)
+        self.assertEqual(
+            out,
+            'Invalid XPath syntax for column "Title": Invalid expression'
+        )
 
-        self.assertTrue(isinstance(out,str)) # error message
-        self.assertTrue('Title' in out) # error message contains correct column name
+    def test_valid_xpath_eval_error(self):
+        table = pd.DataFrame({'html':['<p>foo</p>']})
+        params = {
+            'colselectors' : [
+                # valid xpath -- but not valid for this document
+                {'colxpath':'//badns:a', 'colname':'Title'},
+            ]}
+        out = render(table, params)
+        self.assertEqual(
+            out,
+            'XPath error for column "Title": Undefined namespace prefix'
+        )
+
+    def test_no_colselectors(self):
+        table = pd.DataFrame({'html':['<p>foo</p>']})
+        params = {'colselectors': []}
+        out = render(table, params)
+        # For now, output the input table
+        expected = pd.DataFrame({'html':['<p>foo</p>']})
+        assert_frame_equal(out, expected)
 
 
 if __name__ == '__main__':

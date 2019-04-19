@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Callable, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import warnings
 from html5lib.constants import DataLossWarning
 from lxml import etree
@@ -89,39 +89,44 @@ def select(tree: etree._Element, selector: etree.XPath) -> List[str]:
         return [result]
 
 
-# Extract columns separately, then zip them together.
-# This essentially the IMPORTXML method
-def add_rows_by_zip(tree, colselectors, outtable):
-    column_lists = {}
-    maxlen = 0
-    for col in colselectors:
+def extract_dataframe_by_zip(
+    html: str,
+    columns_to_parse: Dict[str, etree.XPath]
+) -> Tuple[pd.DataFrame, bool]:
+    """
+    Extract columns separately, then zip them together.
+
+    This essentially Excel's IMPORTXML() function.
+
+    Returns (dataframe, should_warn); should_warn is True when the columns have
+    different lengths.
+    """
+    tree = parse_document(html, True)  # is_html=true
+
+    # data: {name: Series of text values per selector}, in order.
+    # The series may be of different length.
+    data = {}
+    for name, selector in columns_to_parse.items():
         try:
-            colxpath = col['colxpath']
-            colname = col['colname']
-            colvals = select(tree, xpath(colxpath))
-
-        except etree.XPathSyntaxError as err:
-            raise ColumnExtractionError('Invalid xpath syntax for column %s: %s' % (colname, colxpath))
+            data[name] = pd.Series(select(tree, selector), dtype=str)
         except etree.XPathEvalError as err:
-            raise ColumnExtractionError('XPath error for column %s: %s' % (colname, err))
-
-        maxlen = max(maxlen, len(colvals))
-        column_lists[colname] = pd.Series(colvals) # cast to Series to enable null-padding
+            raise ColumnExtractionError('XPath error for column "%s": %s'
+                                        % (name, str(err)))
 
     # Pad all column lists to the same length
     # DataFrame constructor will automatically do this if given Series
-    newrows = pd.DataFrame(column_lists, columns=outtable.columns)
+    table = pd.DataFrame(data)
 
     # If they're not all the same length, this may mean extraction failed.
     # Let the user see the data, and give them a warning
-    warn_user = (len(set(len(v) for v in column_lists.values())) != 1)
+    #
+    # We detect by checking if any value in the last row is null.
+    should_warn = len(table) and table.iloc[-1].isnull().any()
 
-    outtable = pd.concat([outtable, newrows], axis=0).reset_index(drop=True)
-    return (outtable, warn_user)
+    return (table, should_warn)
 
 
 def render(table, params):
-
     # Suggest quickfix of adding Scrape HTML if 'html' col not found
     inputcol = 'html'
     if inputcol not in table.columns:
@@ -137,42 +142,64 @@ def render(table, params):
             }]
         }
 
-    colselectors = params['colselectors']
+    # load params
+    # dict of { name: str -> etree.XPath } -- ordered as the input is ordered.
+    columns_to_parse = {}
+    for c in params['colselectors']:
+        colname = c['colname']
+        colxpath = c['colxpath']
+        if not colname:
+            return 'Missing column name'
+        if colname in columns_to_parse:
+            return f'Duplicate column name "{colname}"'
+        if not colxpath:
+            return 'Missing column selector'
+        try:
+            selector = xpath(c['colxpath'])
+        except etree.XPathSyntaxError as err:
+            return (
+                'Invalid XPath syntax for column "%s": %s'
+                % (colname, str(err))
+            )
+        columns_to_parse[colname] = selector
 
-    outcolnames = [c['colname'] for c in colselectors]
-    if '' in outcolnames:
-        return 'Missing column name'
-
-    dup_names = [x for x in outcolnames if outcolnames.count(x)>1]
-    if dup_names:
-        return 'Duplicate column name ' + dup_names[0]
-
-    outcolpaths = [c['colxpath'] for c in colselectors]
-    if '' in outcolpaths:
-        return 'Missing column selector'
-
-    outtable = pd.DataFrame(columns=outcolnames)
+    if not columns_to_parse:
+        # User hasn't input anything. Return input, as is our convention.
+        return table
 
     # Loop over rows of input html column, each of which is a complete html document
     # Concatenate rows extracted from each document.
-    first_different_length_row = None
-    for index,row in table.iterrows():
-        html_text = row[inputcol]
-
-        tree = parse_document(html_text, True) # is_html=true
-
+    result_tables = []
+    input_row_with_warning = None
+    for index, html in table['html'].iteritems():
+        if html is None:
+            continue
         try:
-            outtable,warn = add_rows_by_zip(tree, colselectors, outtable)
+            one_result, warn = extract_dataframe_by_zip(html, columns_to_parse)
         except ColumnExtractionError as err:
             return str(err)
+        result_tables.append(one_result)
+        # track the first row where the extracted columns are not all the same
+        # length
+        if warn and input_row_with_warning is None:
+            input_row_with_warning = index
 
-        # track the first row where the extracted columns are not all the same length
-        if warn and not first_different_length_row:
-            first_different_length_row = index
+    if result_tables:
+        outtable = pd.concat(result_tables, ignore_index=True)
+    else:
+        # Empty table
+        outtable = pd.DataFrame(
+            {colname: [] for colname in columns_to_parse.keys()},
+            dtype=str
+        )
 
-    if first_different_length_row:
-        return (outtable,
-                'Extracted columns of differing lengths from HTML on row %d' % first_different_length_row)
+    if input_row_with_warning is not None:
+        return (
+            outtable,
+            (
+                'Extracted columns of differing lengths from HTML on row %d'
+                % (input_row_with_warning + 1)
+            )
+        )
     else:
         return outtable
-
