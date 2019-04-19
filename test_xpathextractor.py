@@ -188,7 +188,6 @@ class XpathExtractorTest(unittest.TestCase):
         self.assertTrue(isinstance(out[1], str)) # warning message
         assert_frame_equal(out[0], expected)
 
-
     def test_empty_input_table(self):
         # No rows in, no rows out (but output the columns the user has specified)
         params = { 
@@ -221,6 +220,17 @@ class XpathExtractorTest(unittest.TestCase):
         out = render(table, params)
 
         self.assertTrue(isinstance(out,str)) # error message
+
+    def test_duplicate_colname(self):
+        table = pd.DataFrame({'html':['<p>foo</p>']})
+        params = { 
+            'colselectors' : [
+                {'colxpath':'//a', 'colname':'Title'},
+                {'colxpath':'//p', 'colname':'Title'},
+            ]}
+        out = render(table, params)
+        self.assertTrue(isinstance(out,str)) # error message
+        self.assertTrue('Title' in out) # error message contains correct column name
 
     def test_bad_xpath(self):
         table = pd.DataFrame({'html':['<p>foo</p>']})

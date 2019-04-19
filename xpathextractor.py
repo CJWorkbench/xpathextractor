@@ -142,6 +142,11 @@ def render(table, params):
     outcolnames = [c['colname'] for c in colselectors]
     if '' in outcolnames:
         return 'Missing column name'
+
+    dup_names = [x for x in outcolnames if outcolnames.count(x)>1]
+    if dup_names:
+        return 'Duplicate column name ' + dup_names[0]
+
     outcolpaths = [c['colxpath'] for c in colselectors]
     if '' in outcolpaths:
         return 'Missing column selector'
