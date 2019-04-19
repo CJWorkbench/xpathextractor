@@ -89,7 +89,7 @@ def select(tree: etree._Element, selector: etree.XPath) -> List[str]:
         return [result]
 
 
-# Extract columns separately, then zip them together. 
+# Extract columns separately, then zip them together.
 # This essentially the IMPORTXML method
 def add_rows_by_zip(tree, colselectors, outtable):
     column_lists = {}
@@ -112,7 +112,7 @@ def add_rows_by_zip(tree, colselectors, outtable):
     # DataFrame constructor will automatically do this if given Series
     newrows = pd.DataFrame(column_lists, columns=outtable.columns)
 
-    # If they're not all the same length, this may mean extraction failed. 
+    # If they're not all the same length, this may mean extraction failed.
     # Let the user see the data, and give them a warning
     warn_user = (len(set(len(v) for v in column_lists.values())) != 1)
 
@@ -123,7 +123,7 @@ def add_rows_by_zip(tree, colselectors, outtable):
 def render(table, params):
 
     # Suggest quickfix of adding Scrape HTML if 'html' col not found
-    inputcol = 'html'    
+    inputcol = 'html'
     if inputcol not in table.columns:
         return {
             'error': "No 'html' column found. Do you need to scrape?",
@@ -159,7 +159,7 @@ def render(table, params):
     for index,row in table.iterrows():
         html_text = row[inputcol]
 
-        tree = parse_document(html_text, True) # is_html=true 
+        tree = parse_document(html_text, True) # is_html=true
 
         try:
             outtable,warn = add_rows_by_zip(tree, colselectors, outtable)
@@ -167,11 +167,11 @@ def render(table, params):
             return str(err)
 
         # track the first row where the extracted columns are not all the same length
-        if warn and not first_different_length_row: 
+        if warn and not first_different_length_row:
             first_different_length_row = index
 
     if first_different_length_row:
-        return (outtable, 
+        return (outtable,
                 'Extracted columns of differing lengths from HTML on row %d' % first_different_length_row)
     else:
         return outtable

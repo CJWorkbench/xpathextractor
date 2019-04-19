@@ -106,10 +106,10 @@ class Html1(unittest.TestCase):
 class XpathExtractorTest(unittest.TestCase):
 
     def test_multiple_columns_unequal_lengths(self):
-        # Use the "zip" extraction algorithm. Should pad all columns to same length 
+        # Use the "zip" extraction algorithm. Should pad all columns to same length
         # if needed, and give a warning if we did.
 
-        doc1 = '''    
+        doc1 = '''
             <!DOCTYPE html><html>
               <head>
                 <meta charset="utf-16be">
@@ -132,7 +132,7 @@ class XpathExtractorTest(unittest.TestCase):
                 </ul>
               </body>'''
 
-        doc2 = '''     
+        doc2 = '''
             <!DOCTYPE html><html>
               <head>
                 <meta charset="utf-16be">
@@ -148,7 +148,7 @@ class XpathExtractorTest(unittest.TestCase):
                         <p>C description</p>
                         <p>D description</p>
                     </li>
-                </ul>   
+                </ul>
                 <table>
                     <tr>
                         <th>Name<th>
@@ -172,8 +172,8 @@ class XpathExtractorTest(unittest.TestCase):
         table = pd.DataFrame({'html':[doc1, doc2]})
 
 
-        params = { 
-            'rowxpath':'', 
+        params = {
+            'rowxpath':'',
             'colselectors' : [
                 {'colxpath':'//h1', 'colname':'Title'},
                 {'colxpath':'//p', 'colname':'Description'},
@@ -184,13 +184,36 @@ class XpathExtractorTest(unittest.TestCase):
             })
 
         out = render(table, params)
-        self.assertTrue(isinstance(out, tuple)) 
+        self.assertTrue(isinstance(out, tuple))
         self.assertTrue(isinstance(out[1], str)) # warning message
+
+    def test_bad_html(self):
+        params = {
+            'colselectors' : [
+                {'colxpath':'//body', 'colname':'Body'},
+            ]}
+        # We haven't found an example where parse_document() throws an error;
+        # so let's just test that _something_ comes out....
+        out = render(pd.DataFrame({'html':['<a', '<html><body>x</head></html>']}),
+                     params)
+        assert_frame_equal(out, pd.DataFrame({
+            'Body': ['x'],
+        }))
+
+    def test_empty_input_table(self):
+        # No rows in, no rows out (but output the columns the user has specified)
+        params = {
+            'colselectors' : [
+                {'colxpath':'h1', 'colname':'Title'},
+                {'colxpath':'p', 'colname':'Description'},
+            ]}
+        out = render(pd.DataFrame({'html':[]}), params)
+        assert_frame_equal(out, pd.DataFrame(columns=['Title','Description']))
         assert_frame_equal(out[0], expected)
 
     def test_empty_input_table(self):
         # No rows in, no rows out (but output the columns the user has specified)
-        params = { 
+        params = {
             'colselectors' : [
                 {'colxpath':'h1', 'colname':'Title'},
                 {'colxpath':'p', 'colname':'Description'},
@@ -200,7 +223,7 @@ class XpathExtractorTest(unittest.TestCase):
 
     def test_empty_colselector(self):
         # missing xpath should error
-        params = { 
+        params = {
             'colselectors' : [
                 {'colxpath':'', 'colname':'Title'},
                 {'colxpath':'p', 'colname':'Description'},
@@ -212,7 +235,7 @@ class XpathExtractorTest(unittest.TestCase):
     def test_empty_colname(self):
         # missing column name should error
         table = pd.DataFrame({'html':['<p>foo</p>']})
-        params = { 
+        params = {
             'colselectors' : [
                 {'colxpath':'.', 'colname':'Title'},
                 {'colxpath':'p', 'colname':''},
@@ -223,7 +246,7 @@ class XpathExtractorTest(unittest.TestCase):
 
     def test_duplicate_colname(self):
         table = pd.DataFrame({'html':['<p>foo</p>']})
-        params = { 
+        params = {
             'colselectors' : [
                 {'colxpath':'//a', 'colname':'Title'},
                 {'colxpath':'//p', 'colname':'Title'},
