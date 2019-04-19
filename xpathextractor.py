@@ -7,6 +7,10 @@ from lxml import etree
 from lxml.html import html5parser
 import pandas as pd
 
+# Custom exception class used to pass a problem with a particular column
+class ColumnExtractionError(Exception):
+     pass
+
 # GLOBALLY ignore the warnings that (hopefully) only this module will emit. The
 # warnings all have to do with "invalid" HTML, but that HTML is often good
 # enough for our users so it isn't worth dumping anything to stderr.
@@ -91,9 +95,18 @@ def add_rows_by_zip(tree, colselectors, outtable):
     column_lists = {}
     maxlen = 0
     for col in colselectors:
-        colvals = select(tree, xpath(col['colxpath']))
+        try:
+            colxpath = col['colxpath']
+            colname = col['colname']
+            colvals = select(tree, xpath(colxpath))
+
+        except etree.XPathSyntaxError as err:
+            raise ColumnExtractionError('Invalid xpath syntax for column %s: %s' % (colname, colxpath))
+        except etree.XPathEvalError as err:
+            raise ColumnExtractionError('XPath error for column %s: %s' % (colname, err))
+
         maxlen = max(maxlen, len(colvals))
-        column_lists[col['colname']] = pd.Series(colvals)
+        column_lists[colname] = pd.Series(colvals) # cast to Series to enable null-padding
 
     # Pad all column lists to the same length
     # DataFrame constructor will automatically do this if given Series
@@ -145,13 +158,12 @@ def render(table, params):
 
         try:
             outtable,warn = add_rows_by_zip(tree, colselectors, outtable)
+        except ColumnExtractionError as err:
+            return str(err)
 
-            # track the first row where the extracted columns are not all the same length
-            if warn and not first_different_length_row: 
-                first_different_length_row = index
-
-        except etree.XPathEvalError as err:
-            return (None, 'XPath error: %s' % err)
+        # track the first row where the extracted columns are not all the same length
+        if warn and not first_different_length_row: 
+            first_different_length_row = index
 
     if first_different_length_row:
         return (outtable, 

@@ -189,10 +189,19 @@ class XpathExtractorTest(unittest.TestCase):
         assert_frame_equal(out[0], expected)
 
 
+    def test_empty_input_table(self):
+        # No rows in, no rows out (but output the columns the user has specified)
+        params = { 
+            'colselectors' : [
+                {'colxpath':'h1', 'colname':'Title'},
+                {'colxpath':'p', 'colname':'Description'},
+            ]}
+        out = render(pd.DataFrame({'html':[]}), params)
+        assert_frame_equal(out, pd.DataFrame(columns=['Title','Description']))
+
     def test_empty_colselector(self):
         # missing xpath should error
         params = { 
-            'rowxpath':'//li', 
             'colselectors' : [
                 {'colxpath':'', 'colname':'Title'},
                 {'colxpath':'p', 'colname':'Description'},
@@ -201,18 +210,30 @@ class XpathExtractorTest(unittest.TestCase):
 
         self.assertTrue(isinstance(out, str)) # error message
 
-
     def test_empty_colname(self):
         # missing column name should error
+        table = pd.DataFrame({'html':['<p>foo</p>']})
         params = { 
-            'rowxpath':'//li', 
             'colselectors' : [
                 {'colxpath':'.', 'colname':'Title'},
                 {'colxpath':'p', 'colname':''},
             ]}
-        out = render(pd.DataFrame({'html':['<p>foo</p>']}), params)
+        out = render(table, params)
 
         self.assertTrue(isinstance(out,str)) # error message
+
+    def test_bad_xpath(self):
+        table = pd.DataFrame({'html':['<p>foo</p>']})
+        params = {
+            'colselectors' : [
+                {'colxpath':'totes not an xpath', 'colname':'Title'},
+                {'colxpath':'p', 'colname':'Description'},
+            ]}
+        out = render(table, params)
+
+        self.assertTrue(isinstance(out,str)) # error message
+        self.assertTrue('Title' in out) # error message contains correct column name
+
 
 if __name__ == '__main__':
     unittest.main(testRunner=UnittestRunnerThatDoesntAddWarningFilter())
