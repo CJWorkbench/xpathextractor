@@ -3,6 +3,7 @@
 from typing import Dict, List, Optional, Tuple
 import warnings
 from html5lib.constants import DataLossWarning
+import html5lib.filters.whitespace
 from lxml import etree
 from lxml.html import html5parser
 import pandas as pd
@@ -58,6 +59,10 @@ def parse_document(text: str, is_html: bool) -> etree._Element:
         return etree.fromstring(text.encode('utf-8'), parser)
 
 
+TreeWalker = html5lib.getTreeWalker('etree')
+WhitespaceFilter = html5lib.filters.whitespace.Filter
+
+
 def _item_to_string(item) -> str:
     """Convert an XPath-returned item to a string.
 
@@ -66,7 +71,21 @@ def _item_to_string(item) -> str:
     """
     if hasattr(item, 'itertext'):
         # This is an Element.
-        return ''.join(item.itertext())
+        #
+        # We need to strip insignificant whitespace but preserve _significant_
+        # whitespace. For instance, "<p>a <b> b</b></p>" becomes "a  b" (two
+        # spaces); "<p>a  <b>b</b>" becomes one.
+        #
+        # Many websites have stylesheets that hide _significant_ whitespace --
+        # using font-size:0, negative margins, or some-such. We don't use the
+        # stylesheet, so we don't get that.
+        #
+        # Finally, we strip the output. That's what IMPORTXML() does, and the
+        # user probably wants it.
+        texts = [token['data']
+                 for token in WhitespaceFilter(TreeWalker(item))
+                 if token['type'] in ('Characters', 'SpaceCharacters')]
+        return ''.join(texts).strip()
     else:
         # item.is_attribute
         # item.is_text

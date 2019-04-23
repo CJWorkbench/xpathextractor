@@ -94,6 +94,14 @@ class Html1(unittest.TestCase):
         # Parse invalid HTML by adding missing elements
         self.assertEqual(self.select('//tr'), ['Single-cell table'])
 
+    def test_clean_insignificant_whitespace(self):
+        tree = parse_document(
+            '<html><body><p>\n  hi <b class="X"> !</b>\n</p></body></html>',
+            True
+        )
+        result = select(tree, xpath('//p'))
+        self.assertEqual(result, ['hi  !'])
+
 
 # class HtmlTest(unittest.TestCase):
 #     def test_no_warning_coercing_non_xml_name(self):
