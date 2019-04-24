@@ -1,4 +1,4 @@
-name: "Xpath extractor"
+name: "XPath extractor"
 id_name: "xpathextractor"
 category: "Scrape"
 icon: "transform"
