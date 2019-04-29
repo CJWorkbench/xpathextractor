@@ -103,6 +103,10 @@ def select(tree: etree._Element, selector: etree.XPath) -> List[str]:
     result = selector(tree)
     if hasattr(result, '__iter__') and not isinstance(result, str):
         return list(_item_to_string(item) for item in result)
+    elif isinstance(result, bool):
+        # boolean(//a) => bool. Return list of str. (Workbench does not support
+        # bool.)
+        return [str(result)]
     else:
         # count(//a) => float. Return list of float.
         return [result]

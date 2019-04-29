@@ -48,8 +48,8 @@ class Xml1(unittest.TestCase):
         self.assertEqual(self.select('count(//d)'), [2.0])
 
     def test_bool(self):
-        self.assertEqual(self.select('boolean(//f)'), [True])
-        self.assertEqual(self.select('boolean(//g)'), [False])
+        self.assertEqual(self.select('boolean(//f)'), ['True'])
+        self.assertEqual(self.select('boolean(//g)'), ['False'])
 
 
 class Html1(unittest.TestCase):
