@@ -10,7 +10,7 @@ parameters:
       type: list
       child_parameters:
         - id_name: colxpath
-          name: "Column selector"
+          name: "XPath selector"
           type: string
           placeholder: "Enter xpath selector"
         - id_name: colname
