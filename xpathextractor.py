@@ -82,10 +82,15 @@ def _item_to_string(item) -> str:
         #
         # Finally, we strip the output. That's what IMPORTXML() does, and the
         # user probably wants it.
-        texts = [token['data']
-                 for token in WhitespaceFilter(TreeWalker(item))
-                 if token['type'] in ('Characters', 'SpaceCharacters')]
-        return ''.join(texts).strip()
+    
+        # Except no. Sadly, TreeWalker crashes on a fairly simple case extracting
+        # //h2 (bug #166144899). So just trim for now.
+        # texts = [token['data']
+        #          for token in WhitespaceFilter(TreeWalker(item))
+        #          if token['type'] in ('Characters', 'SpaceCharacters')]
+        # return ''.join(texts).strip()
+
+        return ''.join(item.itertext()).strip()
     else:
         # item.is_attribute
         # item.is_text
