@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 import warnings
 from html5lib.constants import DataLossWarning
 import html5lib.filters.whitespace
@@ -46,8 +46,8 @@ def parse_document(text: str, is_html: bool) -> etree._Element:
     """
     if is_html:
         parser = html5parser.HTMLParser(namespaceHTMLElements=False)
-        tree = html5parser.fromstring(text, parser=parser)
-        return tree
+        document = html5parser.fromstring(text, parser=parser)
+        return document
     else:
         parser = etree.XMLParser(
             encoding='utf-8',
@@ -59,7 +59,11 @@ def parse_document(text: str, is_html: bool) -> etree._Element:
         return etree.fromstring(text.encode('utf-8'), parser)
 
 
-TreeWalker = html5lib.getTreeWalker('etree')
+# `etree` second argument is as suggested at
+# https://github.com/html5lib/html5lib-python/issues/338#issuecomment-298789202
+#
+# Solves walking over comments (bug #166144899)
+TreeWalker = html5lib.getTreeWalker('etree', etree)
 WhitespaceFilter = html5lib.filters.whitespace.Filter
 
 
@@ -82,15 +86,10 @@ def _item_to_string(item) -> str:
         #
         # Finally, we strip the output. That's what IMPORTXML() does, and the
         # user probably wants it.
-    
-        # Except no. Sadly, TreeWalker crashes on a fairly simple case extracting
-        # //h2 (bug #166144899). So just trim for now.
-        # texts = [token['data']
-        #          for token in WhitespaceFilter(TreeWalker(item))
-        #          if token['type'] in ('Characters', 'SpaceCharacters')]
-        # return ''.join(texts).strip()
-
-        return ''.join(item.itertext()).strip()
+        texts = [token['data']
+                 for token in WhitespaceFilter(TreeWalker(item))
+                 if token['type'] in ('Characters', 'SpaceCharacters')]
+        return ''.join(texts).strip()
     else:
         # item.is_attribute
         # item.is_text
