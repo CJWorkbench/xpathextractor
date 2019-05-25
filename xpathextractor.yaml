@@ -1,13 +1,39 @@
-name: "XPath extractor"
+name: "HTML to Table"
 id_name: "xpathextractor"
 category: "Scrape"
 icon: "transform"
-description: "Extract a table from an HTML scrape using xpath"
+description: "Extract a table from HTML text using <table> tags or xpath selectors"
 help_url: "modules/scrape/xpath-extractor"
 parameters:
+    - name: Method
+      id_name: method
+      type: menu
+      default: table
+      options:
+      - { value: table, label: <table> tags }
+      - { value: xpath, label: Xpath selectors }
+
+    - name: Which table on this page?
+      id_name: tablenum
+      type: integer
+      default: 1
+      visible_if: 
+        id_name: method
+        value: [ table ]
+    - name: First row is header
+      id_name: first_row_is_header
+      type: checkbox
+      default: false
+      visible_if: 
+        id_name: method
+        value: [ table ]
+
     - name: ""
       id_name: colselectors
       type: list
+      visible_if: 
+        id_name: method
+        value: [ xpath ]
       child_parameters:
         - id_name: colxpath
           name: "XPath selector"

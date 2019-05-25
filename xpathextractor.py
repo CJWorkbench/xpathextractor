@@ -2,11 +2,15 @@
 
 from typing import Dict, List, Tuple
 import warnings
+import html5lib
 from html5lib.constants import DataLossWarning
 import html5lib.filters.whitespace
 from lxml import etree
 from lxml.html import html5parser
 import pandas as pd
+import re
+
+# ---- Xpath ----
 
 # Custom exception class used to pass a problem with a particular column
 class ColumnExtractionError(Exception):
@@ -123,7 +127,7 @@ def extract_dataframe_by_zip(
     """
     Extract columns separately, then zip them together.
 
-    This essentially Excel's IMPORTXML() function.
+    This essentially Google Sheets' IMPORTXML() function.
 
     Returns (dataframe, should_warn); should_warn is True when the columns have
     different lengths.
@@ -153,22 +157,8 @@ def extract_dataframe_by_zip(
     return (table, should_warn)
 
 
-def render(table, params):
-    # Suggest quickfix of adding Scrape HTML if 'html' col not found
-    inputcol = 'html'
-    if inputcol not in table.columns:
-        return {
-            'error': "No 'html' column found. Do you need to scrape?",
-            'quick_fixes': [{
-                'text': 'Add HTML scraper',
-                'action': 'prependModule',
-                'args': [
-                    'urlscraper',
-                    {}
-                ],
-            }]
-        }
-
+# Extract with one xpath selector per column
+def extract_xpath(table, params):
     # load params
     # dict of { name: str -> etree.XPath } -- ordered as the input is ordered.
     columns_to_parse = {}
@@ -230,3 +220,286 @@ def render(table, params):
         )
     else:
         return outtable
+
+
+
+
+# ---- Ripped from server/utils.py ----
+# Sigh. This is absurd. Either the host should do fixup of column names and types, 
+# or we should have a module "standard library"/callbacks provided by server.
+
+def uniquize_colnames(colnames):
+    """
+    Yield colnames in one pass, renaming so no two names are alike.
+
+    The algorithm: Match each colname against "Column Name 2": everything up to
+    ending digits is the 'key' and the ending digits are the 'number'. Maintain
+    a blacklist of numbers, for each key; when a key+number have been seen,
+    find the first _free_ number with that key to construct a new column name.
+
+    This algorithm is ... generic. It's useful if we know nothing at all about
+    the columns and no column names are "important" or "to-keep-unchanged".
+    """
+    blacklist = {}  # key => set of numbers
+    regex = re.compile(r'\A(.*?) (\d+)\Z')
+    for colname in colnames:
+        # Find key and num
+        match = regex.fullmatch(colname)
+        if match:
+            key = match.group(1)
+            num = int(match.group(2))
+        else:
+            key = colname
+            num = 1
+
+        used_nums = blacklist.setdefault(key, set())
+        if num in used_nums:
+            # Theoretically this could raise StopIteration ... but what
+            # _should_ we do when we have so many columns?
+            num = next(n for n in range(1, 9999999) if n not in used_nums)
+        used_nums.add(num)
+
+        if not match and num == 1:
+            # Common case: yield the original name
+            yield key
+        else:
+            # Yield a unique name
+            # The original colname had a number; the one we _output_ must also
+            # have a number.
+            yield key + ' ' + str(num)
+
+def autocast_series_dtype(series: pd.Series):
+    """
+    Cast any sane Series to str/category[str]/number/datetime.
+
+    This is appropriate when parsing CSV data or Excel data. It _seems_
+    appropriate when a search-and-replace produces numeric columns like
+    '$1.32' => '1.32' ... but perhaps that's only appropriate in very-specific
+    cases.
+
+    The input must be "sane": if the dtype is object or category, se assume
+    _every value_ is str (or null).
+
+    If the series is all-null, do nothing.
+
+    Avoid spurious calls to this function: it's expensive.
+
+    TODO handle dates and maybe booleans.
+    """
+    if series.dtype == object:
+        nulls = series.isnull()
+        if (nulls | (series == '')).all():
+            return series
+        try:
+            # If it all looks like numbers (like in a CSV), cast to number.
+            return pd.to_numeric(series)
+        except (ValueError, TypeError):
+            # Otherwise, we want all-string. Is that what we already have?
+            #
+            # TODO assert that we already have all-string, and nix this
+            # spurious conversion.
+            array = series[~nulls].array
+            if any(type(x) != str for x in array):
+                series = series.astype(str)
+                series[nulls] = None
+            return series
+    elif hasattr(series, 'cat'):
+        # Categorical series. Try to infer type of series.
+        #
+        # Assume categories are all str: after all, we're assuming the input is
+        # "sane" and "sane" means only str categories are valid.
+        if (series.isnull() | (series == '')).all():
+            return series
+        try:
+            return pd.to_numeric(series)
+        except (ValueError, TypeError):
+            # We don't cast categories to str here -- because we have no
+            # callers that would create categories that aren't all-str. If we
+            # ever do, this is where we should do the casting.
+            return series
+    else:
+        assert is_numeric_dtype(series) or is_datetime64_dtype(series)
+        return series
+
+
+def autocast_dtypes_in_place(table: pd.DataFrame) -> None:
+    """
+    Cast str/object columns to numeric, if possible.
+
+    This is appropriate when parsing CSV data, or maybe Excel data. It is
+    probably not appropriate to call this method elsewhere, since it destroys
+    data types all over the table.
+
+    The input must be _sane_ data only!
+
+    TODO handle dates and maybe booleans.
+    """
+    for colname in table:
+        column = table[colname]
+        table[colname] = autocast_series_dtype(column)
+
+def merge_colspan_headers_in_place(table) -> None:
+    """
+    Turn tuple colnames into strings.
+
+    Pandas `read_html()` returns tuples for column names when scraping tables
+    with colspan. Collapse duplicate entries and reformats to be human
+    readable. E.g. ('year', 'year') -> 'year' and
+    ('year', 'month') -> 'year - month'
+
+    Alter the table in place, no return value.
+    """
+    newcols = []
+    for c in table.columns:
+        if isinstance(c, tuple):
+            # collapse all runs of duplicate values:
+            # 'a','a','b','c','c','c' -> 'a','b','c'
+            vals = list(c)
+            idx = 0
+            while idx < len(vals) - 1:
+                if vals[idx] == vals[idx + 1]:
+                    vals.pop(idx)
+                else:
+                    idx += 1
+            # put dashes between all remaining header values
+            newcols.append(' - '.join(vals))
+        elif isinstance(c, int):
+            # If first row isn't header and there's no <thead>, table.columns
+            # will be an integer index.
+            newcols.append('Column %d' % (c + 1))
+        else:
+            newcols.append(c)
+    # newcols can contain duplicates. Rename them.
+    table.columns = list(uniquize_colnames(newcols))
+
+
+# ---- Tables ----
+
+# This is applied to each row of our input
+def extract_table_from_one_page(html, tablenum, first_row_is_header, rowname):
+    try:
+        # pandas.read_html() does automatic type conversion, but we prefer
+        # our own. Delve into its innards so we can pass all the conversion
+        # kwargs we want.
+        tables = pd.io.html._parse(
+            # Positional arguments:
+            flavor='html5lib',  # force algorithm, for reproducibility
+            io=html,
+            match='.+',
+            attrs=None,
+            encoding=None,  # html string is already decoded
+            displayed_only=False,  # avoid dud feature: it ignores CSS
+            # Required kwargs that pd.read_html() would set by default:
+            header=None,
+            skiprows=None,
+            # Now the reason we used pd.io.html._parse() instead of
+            # pd.read_html(): we get to pass whatever kwargs we want to
+            # TextParser.
+            #
+            # kwargs we get to add as a result of this hack:
+            na_filter=False,  # do not autoconvert
+            dtype=str,  # do not autoconvert
+        )
+    except ValueError:
+        return 'Did not find any <table> tags in ' + rowname
+    except IndexError:
+        # pandas.read_html() gives this unhelpful error message....
+        return 'Table has no columns in ' + rowname
+
+    if not tables:
+        return 'Did not find any <table> tags in ' + rowname
+
+    if tablenum >= len(tables):
+        return f'The maximum table number is {len(tables)} for {rowname}'
+        
+    table = tables[tablenum]
+
+    if first_row_is_header and len(table) >= 1:  # if len == 0, no-op
+        table.columns = list(uniquize_colnames(
+            str(c) or ('Column %d' % (i + 1))
+            for i, c in enumerate(table.iloc[0, :])
+        ))
+        table.drop(index=0, inplace=True)
+        table.reset_index(drop=True, inplace=True)
+    else:
+        # pd.read_html() guarantees unique colnames
+        merge_colspan_headers_in_place(table)
+
+    autocast_dtypes_in_place(table)
+    if len(table) == 0:
+        # read_html() produces an empty Index. We want a RangeIndex.
+        table.reset_index(drop=True, inplace=True)
+    return table
+
+
+# Extract contents of <table> tag
+def extract_table(table, params):
+    # We delve into pd.read_html()'s innards, above. Part of that means some
+    # first-use initialization.
+    pd.io.html._importers()
+
+    tablenum = params['tablenum'] - 1  # 1-based for user
+    first_row_is_header = params['first_row_is_header']
+
+    if tablenum < 0:
+        return 'Table number must be at least 1'
+
+    # Loop over rows of input html column, each of which is a complete html document
+    # Concatenate rows extracted from each document.
+    result_tables = []
+    first_warning = None
+    for index, html in table['html'].iteritems():
+        if html is None:
+            continue
+
+        # Use url for "name" of row if available, for error messages
+        if 'url' in table.columns:
+            rowname = table['url'].iloc[index]
+        else:
+            rowname = 'input html row ' + str(index+1)
+
+        one_result = extract_table_from_one_page(html, tablenum, first_row_is_header, rowname)
+        
+        if isinstance(one_result, str):
+            if not first_warning:
+                first_warning = one_result
+        else:
+            result_tables.append(one_result)
+
+    if result_tables:
+        result = pd.concat(result_tables, ignore_index=True, sort=False)
+        if first_warning:
+            return (result, first_warning)
+        else:
+            return result
+    else:
+        if first_warning:
+            return first_warning # if nothing is extracted, warning becomes error
+        else:
+            return pd.DataFrame()
+
+
+# ---- Main ----
+
+def render(table, params):
+    # Suggest quickfix of adding Scrape HTML if 'html' col not found
+    inputcol = 'html'
+    if inputcol not in table.columns:
+        return {
+            'error': "No 'html' column found. Do you need to scrape?",
+            'quick_fixes': [{
+                'text': 'Add HTML scraper',
+                'action': 'prependModule',
+                'args': [
+                    'urlscraper',
+                    {}
+                ],
+            }]
+        }
+
+    method = params['method']
+    if method=='xpath':
+        return extract_xpath(table, params)
+    else:
+        return extract_table(table, params)
+
