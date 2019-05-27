@@ -459,7 +459,7 @@ def extract_table(table, params):
             rowname = 'input html row ' + str(index+1)
 
         one_result = extract_table_from_one_page(html, tablenum, first_row_is_header, rowname)
-        
+
         if isinstance(one_result, str):
             if not first_warning:
                 first_warning = one_result
@@ -503,3 +503,16 @@ def render(table, params):
     else:
         return extract_table(table, params)
 
+
+def _migrate_v0_to_v1(params):
+    return {
+        **params,
+        'method': 'xpath',  # v0 had only xpath method
+        'tablenum': 1,
+        'first_row_is_header': False
+    }
+
+def migrate_params(params):
+    if 'method' not in params:
+        params = _migrate_v0_to_v1(params)
+    return params

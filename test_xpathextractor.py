@@ -3,7 +3,7 @@ import unittest
 import warnings
 import pandas as pd
 from pandas.testing import assert_frame_equal
-from xpathextractor import parse_document, select, xpath, render
+from xpathextractor import parse_document, select, xpath, render, migrate_params
 
 class UnittestRunnerThatDoesntAddWarningFilter(unittest.TextTestRunner):
     def __init(self, *args, **kwargs):
@@ -612,6 +612,21 @@ class TableExtractorTest(unittest.TestCase):
                                 'Unnamed: 0': ['a'],
                                 'Column 1': ['b'],
                                 'Unnamed: 2': ['c']}))
+
+class MigrationTest(unittest.TestCase):
+    def test_migrate_v0(self):
+        v0_params = {
+            'colselectors': [ {'colxpath':'foo', 'colname':'bar'} ] 
+        }
+        v1_params = {
+            'method': 'xpath',
+            **v0_params,
+            'tablenum': 1,
+            'first_row_is_header': False
+        }
+
+        new_params = migrate_params(v0_params)
+        self.assertEqual(new_params, v1_params)
 
 if __name__ == '__main__':
     unittest.main(testRunner=UnittestRunnerThatDoesntAddWarningFilter())
