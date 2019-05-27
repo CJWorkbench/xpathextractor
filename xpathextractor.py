@@ -376,7 +376,7 @@ def merge_colspan_headers_in_place(table) -> None:
 # ---- Tables ----
 
 # This is applied to each row of our input
-def extract_table_from_one_page(html, tablenum, first_row_is_header, rowname):
+def extract_table_from_one_page(html, tablenum, rowname):
     try:
         # pandas.read_html() does automatic type conversion, but we prefer
         # our own. Delve into its innards so we can pass all the conversion
@@ -414,16 +414,8 @@ def extract_table_from_one_page(html, tablenum, first_row_is_header, rowname):
         
     table = tables[tablenum]
 
-    if first_row_is_header and len(table) >= 1:  # if len == 0, no-op
-        table.columns = list(uniquize_colnames(
-            str(c) or ('Column %d' % (i + 1))
-            for i, c in enumerate(table.iloc[0, :])
-        ))
-        table.drop(index=0, inplace=True)
-        table.reset_index(drop=True, inplace=True)
-    else:
-        # pd.read_html() guarantees unique colnames
-        merge_colspan_headers_in_place(table)
+    # pd.read_html() guarantees unique colnames
+    merge_colspan_headers_in_place(table)
 
     autocast_dtypes_in_place(table)
     if len(table) == 0:
@@ -439,7 +431,6 @@ def extract_table(table, params):
     pd.io.html._importers()
 
     tablenum = params['tablenum'] - 1  # 1-based for user
-    first_row_is_header = params['first_row_is_header']
 
     if tablenum < 0:
         return 'Table number must be at least 1'
@@ -458,7 +449,7 @@ def extract_table(table, params):
         else:
             rowname = 'input html row ' + str(index+1)
 
-        one_result = extract_table_from_one_page(html, tablenum, first_row_is_header, rowname)
+        one_result = extract_table_from_one_page(html, tablenum, rowname)
 
         if isinstance(one_result, str):
             if not first_warning:
@@ -508,11 +499,12 @@ def _migrate_v0_to_v1(params):
     return {
         **params,
         'method': 'xpath',  # v0 had only xpath method
-        'tablenum': 1,
-        'first_row_is_header': False
+        'tablenum': 1
     }
 
 def migrate_params(params):
     if 'method' not in params:
         params = _migrate_v0_to_v1(params)
+    params.pop('first_row_is_header', None) # remove defunct key from a few early test wf
+
     return params

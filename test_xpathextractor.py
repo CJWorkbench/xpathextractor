@@ -115,7 +115,6 @@ class Html1(unittest.TestCase):
 defParams = {
     'method':'xpath',
     'tablenum': 0,
-    'first_row_is_header': False,
     'colselectors': []
 }
 
@@ -429,35 +428,6 @@ class TableExtractorTest(unittest.TestCase):
         assert_frame_equal(out[0], pd.DataFrame({'B': [1,2,1,2], 'A':[2,3,2,3]}))
         self.assertEqual(out[1], 'Did not find any <table> tags in http://foo.com/b')
 
-    def test_first_row_is_header(self):
-        table = make_html_input(self.a_table_html)
-        params = { 
-            **defTableParams, 
-            'first_row_is_header': True
-        }
-        result = render(table, params)
-        assert_frame_equal(result, pd.DataFrame({'1': [2], '2': [3]}))
-
-    def test_first_row_is_header_zero_rows(self):
-        table = make_html_input("""
-            <html>
-                <body>
-                    <table>
-                        <tbody>
-                            <tr><td>A</td><td>B</td></tr>
-                        </tbody>
-                    </table>
-                </body>
-            </html>
-            """)
-        params = { 
-            **defTableParams, 
-            'first_row_is_header': True
-        }
-        result = render(table, params)
-        assert_frame_equal(result, pd.DataFrame({'A': [], 'B': []}, dtype=object))
-
-
     def test_table_index_under(self):
         table = make_html_input(self.a_table_html)
         params = { 
@@ -621,8 +591,7 @@ class MigrationTest(unittest.TestCase):
         v1_params = {
             'method': 'xpath',
             **v0_params,
-            'tablenum': 1,
-            'first_row_is_header': False
+            'tablenum': 1
         }
 
         new_params = migrate_params(v0_params)

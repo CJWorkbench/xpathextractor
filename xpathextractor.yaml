@@ -20,13 +20,6 @@ parameters:
       visible_if: 
         id_name: method
         value: [ table ]
-    - name: First row is header
-      id_name: first_row_is_header
-      type: checkbox
-      default: false
-      visible_if: 
-        id_name: method
-        value: [ table ]
 
     - name: ""
       id_name: colselectors
