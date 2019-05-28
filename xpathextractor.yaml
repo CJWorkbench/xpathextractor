@@ -8,7 +8,7 @@ parameters:
     - name: Method
       id_name: method
       type: menu
-      default: table
+      default: xpath
       options:
       - { value: table, label: <table> tags }
       - { value: xpath, label: Xpath selectors }
