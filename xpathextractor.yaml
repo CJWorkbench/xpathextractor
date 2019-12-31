@@ -2,7 +2,7 @@ name: "HTML to Table"
 id_name: "xpathextractor"
 category: "Scrape"
 icon: "transform"
-description: "Extract a table from HTML text using <table> tags or xpath selectors"
+description: "Extract a table from HTML text using <table> tags or xpath selectors."
 help_url: "modules/scrape/xpath-extractor"
 parameters:
     - name: Method
