@@ -1,0 +1,51 @@
+# English translations for PROJECT.
+# Copyright (C) 2020 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2020-01-07 06:47+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.7.0\n"
+
+msgid "_spec.name"
+msgstr "HTML to table"
+
+msgid "_spec.description"
+msgstr "Extract a table from HTML text using <table> tags or xpath selectors."
+
+msgid "_spec.parameters.method.name"
+msgstr "Method"
+
+msgid "_spec.parameters.method.options.table.label"
+msgstr "<table> tags"
+
+msgid "_spec.parameters.method.options.xpath.label"
+msgstr "Xpath selectors"
+
+msgid "_spec.parameters.tablenum.name"
+msgstr "Which table on this page?"
+
+msgid "_spec.parameters.colselectors.child_parameters.colxpath.name"
+msgstr "XPath selector"
+
+msgid "_spec.parameters.colselectors.child_parameters.colxpath.placeholder"
+msgstr "Enter xpath selector"
+
+msgid "_spec.parameters.colselectors.child_parameters.colname.name"
+msgstr "Column name"
+
+msgid "_spec.parameters.colselectors.child_parameters.colname.placeholder"
+msgstr "Enter column name"
+
