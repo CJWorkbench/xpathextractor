@@ -9,12 +9,23 @@ from lxml import etree
 from lxml.html import html5parser
 import pandas as pd
 import re
+from cjwmodule import i18n
 
 # ---- Xpath ----
 
 # Custom exception class used to pass a problem with a particular column
 class ColumnExtractionError(Exception):
-     pass
+    def __init__(self, column_name, error):
+        self.column_name = column_name
+        self.error = error
+        
+    @property
+    def i18n_message(self):
+        return i18n.trans(
+            "ColumnExtractionError.message",
+            'XPath error for column "{column_name}": {error}',
+            {"column_name": self.column_name, "error": self.error}
+        )
 
 # GLOBALLY ignore the warnings that (hopefully) only this module will emit. The
 # warnings all have to do with "invalid" HTML, but that HTML is often good
@@ -141,8 +152,7 @@ def extract_dataframe_by_zip(
         try:
             data[name] = pd.Series(select(tree, selector), dtype=str)
         except etree.XPathEvalError as err:
-            raise ColumnExtractionError('XPath error for column "%s": %s'
-                                        % (name, str(err)))
+            raise ColumnExtractionError(name, str(err))
 
     # Pad all column lists to the same length
     # DataFrame constructor will automatically do this if given Series
@@ -166,17 +176,28 @@ def extract_xpath(table, params):
         colname = c['colname']
         colxpath = c['colxpath']
         if not colname:
-            return 'Missing column name'
+            return i18n.trans(
+                "badParam.colname.missing",
+                'Missing column name'
+            )
         if colname in columns_to_parse:
-            return f'Duplicate column name "{colname}"'
+            return i18n.trans(
+                "badParam.colname.duplicate",
+                'Duplicate column name "{column_name}"',
+                {"column_name": colname}
+            )
         if not colxpath:
-            return 'Missing column selector'
+            return i18n.trans(
+                "badParam.colxpath.missing",
+                'Missing column selector'
+            )
         try:
             selector = xpath(c['colxpath'])
         except etree.XPathSyntaxError as err:
-            return (
-                'Invalid XPath syntax for column "%s": %s'
-                % (colname, str(err))
+            return i18n.trans(
+                "badParam.colxpath.invalid",
+                'Invalid XPath syntax for column "{column_name}": {error}',
+                {"column_name": colname, "error": str(err)}
             )
         columns_to_parse[colname] = selector
 
@@ -194,7 +215,7 @@ def extract_xpath(table, params):
         try:
             one_result, warn = extract_dataframe_by_zip(html, columns_to_parse)
         except ColumnExtractionError as err:
-            return str(err)
+            return err.i18n_message
         result_tables.append(one_result)
         # track the first row where the extracted columns are not all the same
         # length
@@ -213,9 +234,10 @@ def extract_xpath(table, params):
     if input_row_with_warning is not None:
         return (
             outtable,
-            (
-                'Extracted columns of differing lengths from HTML on row %d'
-                % (input_row_with_warning + 1)
+            i18n.trans(
+                "warning.extractedDifferentLengths",
+                'Extracted columns of differing lengths from HTML on row {row}',
+                {"row": input_row_with_warning + 1}
             )
         )
     else:
@@ -377,6 +399,11 @@ def merge_colspan_headers_in_place(table) -> None:
 
 # This is applied to each row of our input
 def extract_table_from_one_page(html, tablenum, rowname):
+    error_no_table = i18n.trans(
+        'error.noTable',
+        'Did not find any <table> tags in {rowname}',
+        {"rowname": rowname}
+    )
     try:
         # pandas.read_html() does automatic type conversion, but we prefer
         # our own. Delve into its innards so we can pass all the conversion
@@ -401,16 +428,24 @@ def extract_table_from_one_page(html, tablenum, rowname):
             dtype=str,  # do not autoconvert
         )
     except ValueError:
-        return 'Did not find any <table> tags in ' + rowname
+        return error_no_table
     except IndexError:
         # pandas.read_html() gives this unhelpful error message....
-        return 'Table has no columns in ' + rowname
+        return i18n.trans(
+            'error.noColumn',
+            'Table has no columns in {rowname}',
+            {"rowname": rowname}
+        )
 
     if not tables:
-        return 'Did not find any <table> tags in ' + rowname
+        return error_no_table
 
     if tablenum >= len(tables):
-        return f'The maximum table number is {len(tables)} for {rowname}'
+        return i18n.trans(
+            'badParam.tableNum.tooBig',
+            'The maximum table number is {len_tables} for {rowname}',
+            {"n_tables": len(tables), "rowname": rowname}
+        )
         
     table = tables[tablenum]
 
@@ -433,7 +468,7 @@ def extract_table(table, params):
     tablenum = params['tablenum'] - 1  # 1-based for user
 
     if tablenum < 0:
-        return 'Table number must be at least 1'
+        return i18n.trans('badParam.tablenum.negative', 'Table number must be at least 1')
 
     # Loop over rows of input html column, each of which is a complete html document
     # Concatenate rows extracted from each document.
@@ -451,7 +486,7 @@ def extract_table(table, params):
 
         one_result = extract_table_from_one_page(html, tablenum, rowname)
 
-        if isinstance(one_result, str):
+        if isinstance(one_result, i18n.I18nMessage):
             if not first_warning:
                 first_warning = one_result
         else:
@@ -477,9 +512,9 @@ def render(table, params):
     inputcol = 'html'
     if inputcol not in table.columns:
         return {
-            'error': "No 'html' column found. Do you need to scrape?",
-            'quick_fixes': [{
-                'text': 'Add HTML scraper',
+            'message': i18n.trans('error.noHtml.error', "No 'html' column found. Do you need to scrape?"),
+            'quickFixes': [{
+                'text': i18n.trans('error.noHtml.quick_fix.text', 'Add HTML scraper'),
                 'action': 'prependModule',
                 'args': [
                     'urlscraper',
