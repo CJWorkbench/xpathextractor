@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-02-07 20:43+0000\n"
+"POT-Creation-Date: 2020-02-18 16:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: el\n"
@@ -20,34 +20,36 @@ msgstr ""
 "Generated-By: Babel 2.8.0\n"
 
 msgid "_spec.name"
-msgstr ""
+msgstr "Από HTML σε πίνακα"
 
 msgid "_spec.description"
 msgstr ""
+"Εξαγωγή πίνακα από κείμενο HTML χρησιμοποιώντας ετικέτες <table> ή "
+"επιλογείς XPath."
 
 msgid "_spec.parameters.method.name"
-msgstr ""
+msgstr "Μέθοδος"
 
 msgid "_spec.parameters.method.options.table.label"
-msgstr ""
+msgstr "Ετικέτες <table>"
 
 msgid "_spec.parameters.method.options.xpath.label"
-msgstr ""
+msgstr "Επιλογείς XPath"
 
 msgid "_spec.parameters.tablenum.name"
-msgstr ""
+msgstr "Ποιος πίνακας σε αυτή τη σελίδα;"
 
 msgid "_spec.parameters.colselectors.child_parameters.colxpath.name"
-msgstr ""
+msgstr "Επιλογέας XPath"
 
 msgid "_spec.parameters.colselectors.child_parameters.colxpath.placeholder"
-msgstr ""
+msgstr "Εισαγάγετε τον επιλογέα XPath"
 
 msgid "_spec.parameters.colselectors.child_parameters.colname.name"
-msgstr ""
+msgstr "Όνομα στήλης"
 
 msgid "_spec.parameters.colselectors.child_parameters.colname.placeholder"
-msgstr ""
+msgstr "Πληκτρολογήστε το όνομα στήλης"
 
 #: xpathextractor.py:24
 msgid "ColumnExtractionError.message"
