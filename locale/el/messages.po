@@ -53,49 +53,50 @@ msgstr "Πληκτρολογήστε το όνομα στήλης"
 
 #: xpathextractor.py:24
 msgid "ColumnExtractionError.message"
-msgstr ""
+msgstr "Σφάλμα XPath για τη στήλη \"{column_name}\": {error}"
 
 #: xpathextractor.py:179
 msgid "badParam.colname.missing"
-msgstr ""
+msgstr "Λείπει το όνομα της στήλης"
 
 #: xpathextractor.py:184
 msgid "badParam.colname.duplicate"
-msgstr ""
+msgstr "Διπλό όνομα στήλης \"{column_name}\""
 
 #: xpathextractor.py:190
 msgid "badParam.colxpath.missing"
-msgstr ""
+msgstr "Λείπει ο επιλογέας στήλης"
 
 #: xpathextractor.py:200
 msgid "badParam.colxpath.invalid"
-msgstr ""
+msgstr "Μη έγκυρη σύνταξη XPath για τη στήλη \"{column_name}\": {error}"
 
 #: xpathextractor.py:237
 msgid "warning.extractedDifferentLengths"
 msgstr ""
+"Έχει γίνει εξαγωγή στηλών διαφορετικού μήκους από το HTML της σειράς {row}"
 
 #: xpathextractor.py:402
 msgid "error.noTable"
-msgstr ""
+msgstr "Δεν βρέθηκαν ετικέτες <table> στη σειρά {rowname}"
 
 #: xpathextractor.py:434
 msgid "error.noColumn"
-msgstr ""
+msgstr "Ο πίνακας δεν έχει στήλες στη σειρά {rowname}"
 
 #: xpathextractor.py:447
 msgid "badParam.tableNum.tooBig"
-msgstr ""
+msgstr "Ο μέγιστος αριθμός πίνακα είναι {len_tables} για τη σειρά {rowname}"
 
 #: xpathextractor.py:471
 msgid "badParam.tablenum.negative"
-msgstr ""
+msgstr "Ο αριθμός πίνακα πρέπει να είναι τουλάχιστον 1"
 
 #: xpathextractor.py:515
 msgid "error.noHtml.error"
-msgstr ""
+msgstr "Δεν βρέθηκε στήλη \"html\". Χρειάζεται να τη συλλέξεις από κάπου;"
 
 #: xpathextractor.py:517
 msgid "error.noHtml.quick_fix.text"
-msgstr ""
+msgstr "Προσθέστε Συλλέκτη HTML"
 
