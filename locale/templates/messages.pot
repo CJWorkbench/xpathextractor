@@ -44,57 +44,57 @@ msgid "ColumnExtractionError.message"
 msgstr ""
 
 #. default-message: Missing column name
-#: xpathextractor.py:179
+#: xpathextractor.py:183
 msgid "badParam.colname.missing"
 msgstr ""
 
 #. default-message: Duplicate column name "{column_name}"
-#: xpathextractor.py:184
+#: xpathextractor.py:185
 msgid "badParam.colname.duplicate"
 msgstr ""
 
 #. default-message: Missing column selector
-#: xpathextractor.py:190
+#: xpathextractor.py:191
 msgid "badParam.colxpath.missing"
 msgstr ""
 
 #. default-message: Invalid XPath syntax for column "{column_name}": {error}
-#: xpathextractor.py:200
+#: xpathextractor.py:198
 msgid "badParam.colxpath.invalid"
 msgstr ""
 
 #. default-message: Extracted columns of differing lengths from HTML on row {row}
-#: xpathextractor.py:237
+#: xpathextractor.py:234
 msgid "warning.extractedDifferentLengths"
 msgstr ""
 
 #. default-message: Did not find any <table> tags in {rowname}
-#: xpathextractor.py:402
+#: xpathextractor.py:400
 msgid "error.noTable"
 msgstr ""
 
 #. default-message: Table has no columns in {rowname}
-#: xpathextractor.py:434
+#: xpathextractor.py:432
 msgid "error.noColumn"
 msgstr ""
 
 #. default-message: The maximum table number is {len_tables} for {rowname}
-#: xpathextractor.py:447
+#: xpathextractor.py:443
 msgid "badParam.tableNum.tooBig"
 msgstr ""
 
 #. default-message: Table number must be at least 1
-#: xpathextractor.py:471
+#: xpathextractor.py:467
 msgid "badParam.tablenum.negative"
 msgstr ""
 
 #. default-message: No 'html' column found. Do you need to scrape?
-#: xpathextractor.py:515
+#: xpathextractor.py:514
 msgid "error.noHtml.error"
 msgstr ""
 
 #. default-message: Add HTML scraper
-#: xpathextractor.py:517
+#: xpathextractor.py:519
 msgid "error.noHtml.quick_fix.text"
 msgstr ""
 

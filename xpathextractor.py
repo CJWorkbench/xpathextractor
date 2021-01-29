@@ -18,20 +18,23 @@ class ColumnExtractionError(Exception):
     def __init__(self, column_name, error):
         self.column_name = column_name
         self.error = error
-        
+
     @property
     def i18n_message(self):
         return i18n.trans(
             "ColumnExtractionError.message",
             'XPath error for column "{column_name}": {error}',
-            {"column_name": self.column_name, "error": self.error}
+            {"column_name": self.column_name, "error": self.error},
         )
+
 
 # GLOBALLY ignore the warnings that (hopefully) only this module will emit. The
 # warnings all have to do with "invalid" HTML, but that HTML is often good
 # enough for our users so it isn't worth dumping anything to stderr.
-warnings.filterwarnings('ignore', category=DataLossWarning,
-                        module=r'html5lib\._ihatexml')
+warnings.filterwarnings(
+    "ignore", category=DataLossWarning, module=r"html5lib\._ihatexml"
+)
+
 
 def xpath(s: str) -> etree.XPath:
     """
@@ -49,8 +52,8 @@ def xpath(s: str) -> etree.XPath:
         s,
         smart_strings=True,  # so result strings don't ref XML doc
         namespaces={
-            'svg': 'http://www.w3.org/2000/svg',
-        }
+            "svg": "http://www.w3.org/2000/svg",
+        },
     )
 
 
@@ -65,20 +68,20 @@ def parse_document(text: str, is_html: bool) -> etree._Element:
         return document
     else:
         parser = etree.XMLParser(
-            encoding='utf-8',
+            encoding="utf-8",
             # Disable as much as we can, for security
             load_dtd=False,
             collect_ids=False,
-            resolve_entities=False
+            resolve_entities=False,
         )
-        return etree.fromstring(text.encode('utf-8'), parser)
+        return etree.fromstring(text.encode("utf-8"), parser)
 
 
 # `etree` second argument is as suggested at
 # https://github.com/html5lib/html5lib-python/issues/338#issuecomment-298789202
 #
 # Solves walking over comments (bug #166144899)
-TreeWalker = html5lib.getTreeWalker('etree', etree)
+TreeWalker = html5lib.getTreeWalker("etree", etree)
 WhitespaceFilter = html5lib.filters.whitespace.Filter
 
 
@@ -88,7 +91,7 @@ def _item_to_string(item) -> str:
     Rules:
     text node => text contents
     """
-    if hasattr(item, 'itertext'):
+    if hasattr(item, "itertext"):
         # This is an Element.
         #
         # We need to strip insignificant whitespace but preserve _significant_
@@ -101,10 +104,12 @@ def _item_to_string(item) -> str:
         #
         # Finally, we strip the output. That's what IMPORTXML() does, and the
         # user probably wants it.
-        texts = [token['data']
-                 for token in WhitespaceFilter(TreeWalker(item))
-                 if token['type'] in ('Characters', 'SpaceCharacters')]
-        return ''.join(texts).strip()
+        texts = [
+            token["data"]
+            for token in WhitespaceFilter(TreeWalker(item))
+            if token["type"] in ("Characters", "SpaceCharacters")
+        ]
+        return "".join(texts).strip()
     else:
         # item.is_attribute
         # item.is_text
@@ -120,7 +125,7 @@ def select(tree: etree._Element, selector: etree.XPath) -> List[str]:
     """
     # TODO avoid DoS. xpath selectors can take enormous amounts of CPU/memory
     result = selector(tree)
-    if hasattr(result, '__iter__') and not isinstance(result, str):
+    if hasattr(result, "__iter__") and not isinstance(result, str):
         return list(_item_to_string(item) for item in result)
     elif isinstance(result, bool):
         # boolean(//a) => bool. Return list of str. (Workbench does not support
@@ -132,8 +137,7 @@ def select(tree: etree._Element, selector: etree.XPath) -> List[str]:
 
 
 def extract_dataframe_by_zip(
-    html: str,
-    columns_to_parse: Dict[str, etree.XPath]
+    html: str, columns_to_parse: Dict[str, etree.XPath]
 ) -> Tuple[pd.DataFrame, bool]:
     """
     Extract columns separately, then zip them together.
@@ -172,32 +176,26 @@ def extract_xpath(table, params):
     # load params
     # dict of { name: str -> etree.XPath } -- ordered as the input is ordered.
     columns_to_parse = {}
-    for c in params['colselectors']:
-        colname = c['colname']
-        colxpath = c['colxpath']
+    for c in params["colselectors"]:
+        colname = c["colname"]
+        colxpath = c["colxpath"]
         if not colname:
-            return i18n.trans(
-                "badParam.colname.missing",
-                'Missing column name'
-            )
+            return i18n.trans("badParam.colname.missing", "Missing column name")
         if colname in columns_to_parse:
             return i18n.trans(
                 "badParam.colname.duplicate",
                 'Duplicate column name "{column_name}"',
-                {"column_name": colname}
+                {"column_name": colname},
             )
         if not colxpath:
-            return i18n.trans(
-                "badParam.colxpath.missing",
-                'Missing column selector'
-            )
+            return i18n.trans("badParam.colxpath.missing", "Missing column selector")
         try:
-            selector = xpath(c['colxpath'])
+            selector = xpath(c["colxpath"])
         except etree.XPathSyntaxError as err:
             return i18n.trans(
                 "badParam.colxpath.invalid",
                 'Invalid XPath syntax for column "{column_name}": {error}',
-                {"column_name": colname, "error": str(err)}
+                {"column_name": colname, "error": str(err)},
             )
         columns_to_parse[colname] = selector
 
@@ -209,7 +207,7 @@ def extract_xpath(table, params):
     # Concatenate rows extracted from each document.
     result_tables = []
     input_row_with_warning = None
-    for index, html in table['html'].iteritems():
+    for index, html in table["html"].iteritems():
         if html is None:
             continue
         try:
@@ -227,8 +225,7 @@ def extract_xpath(table, params):
     else:
         # Empty table
         outtable = pd.DataFrame(
-            {colname: [] for colname in columns_to_parse.keys()},
-            dtype=str
+            {colname: [] for colname in columns_to_parse.keys()}, dtype=str
         )
 
     if input_row_with_warning is not None:
@@ -236,19 +233,18 @@ def extract_xpath(table, params):
             outtable,
             i18n.trans(
                 "warning.extractedDifferentLengths",
-                'Extracted columns of differing lengths from HTML on row {row}',
-                {"row": input_row_with_warning + 1}
-            )
+                "Extracted columns of differing lengths from HTML on row {row}",
+                {"row": input_row_with_warning + 1},
+            ),
         )
     else:
         return outtable
 
 
-
-
 # ---- Ripped from server/utils.py ----
-# Sigh. This is absurd. Either the host should do fixup of column names and types, 
+# Sigh. This is absurd. Either the host should do fixup of column names and types,
 # or we should have a module "standard library"/callbacks provided by server.
+
 
 def uniquize_colnames(colnames):
     """
@@ -263,7 +259,7 @@ def uniquize_colnames(colnames):
     the columns and no column names are "important" or "to-keep-unchanged".
     """
     blacklist = {}  # key => set of numbers
-    regex = re.compile(r'\A(.*?) (\d+)\Z')
+    regex = re.compile(r"\A(.*?) (\d+)\Z")
     for colname in colnames:
         # Find key and num
         match = regex.fullmatch(colname)
@@ -288,7 +284,8 @@ def uniquize_colnames(colnames):
             # Yield a unique name
             # The original colname had a number; the one we _output_ must also
             # have a number.
-            yield key + ' ' + str(num)
+            yield key + " " + str(num)
+
 
 def autocast_series_dtype(series: pd.Series):
     """
@@ -310,7 +307,7 @@ def autocast_series_dtype(series: pd.Series):
     """
     if series.dtype == object:
         nulls = series.isnull()
-        if (nulls | (series == '')).all():
+        if (nulls | (series == "")).all():
             return series
         try:
             # If it all looks like numbers (like in a CSV), cast to number.
@@ -325,12 +322,12 @@ def autocast_series_dtype(series: pd.Series):
                 series = series.astype(str)
                 series[nulls] = None
             return series
-    elif hasattr(series, 'cat'):
+    elif hasattr(series, "cat"):
         # Categorical series. Try to infer type of series.
         #
         # Assume categories are all str: after all, we're assuming the input is
         # "sane" and "sane" means only str categories are valid.
-        if (series.isnull() | (series == '')).all():
+        if (series.isnull() | (series == "")).all():
             return series
         try:
             return pd.to_numeric(series)
@@ -360,6 +357,7 @@ def autocast_dtypes_in_place(table: pd.DataFrame) -> None:
         column = table[colname]
         table[colname] = autocast_series_dtype(column)
 
+
 def merge_colspan_headers_in_place(table) -> None:
     """
     Turn tuple colnames into strings.
@@ -384,11 +382,11 @@ def merge_colspan_headers_in_place(table) -> None:
                 else:
                     idx += 1
             # put dashes between all remaining header values
-            newcols.append(' - '.join(vals))
+            newcols.append(" - ".join(vals))
         elif isinstance(c, int):
             # If first row isn't header and there's no <thead>, table.columns
             # will be an integer index.
-            newcols.append('Column %d' % (c + 1))
+            newcols.append("Column %d" % (c + 1))
         else:
             newcols.append(c)
     # newcols can contain duplicates. Rename them.
@@ -400,9 +398,9 @@ def merge_colspan_headers_in_place(table) -> None:
 # This is applied to each row of our input
 def extract_table_from_one_page(html, tablenum, rowname):
     error_no_table = i18n.trans(
-        'error.noTable',
-        'Did not find any <table> tags in {rowname}',
-        {"rowname": rowname}
+        "error.noTable",
+        "Did not find any <table> tags in {rowname}",
+        {"rowname": rowname},
     )
     try:
         # pandas.read_html() does automatic type conversion, but we prefer
@@ -410,9 +408,9 @@ def extract_table_from_one_page(html, tablenum, rowname):
         # kwargs we want.
         tables = pd.io.html._parse(
             # Positional arguments:
-            flavor='html5lib',  # force algorithm, for reproducibility
+            flavor="html5lib",  # force algorithm, for reproducibility
             io=html,
-            match='.+',
+            match=".+",
             attrs=None,
             encoding=None,  # html string is already decoded
             displayed_only=False,  # avoid dud feature: it ignores CSS
@@ -432,9 +430,7 @@ def extract_table_from_one_page(html, tablenum, rowname):
     except IndexError:
         # pandas.read_html() gives this unhelpful error message....
         return i18n.trans(
-            'error.noColumn',
-            'Table has no columns in {rowname}',
-            {"rowname": rowname}
+            "error.noColumn", "Table has no columns in {rowname}", {"rowname": rowname}
         )
 
     if not tables:
@@ -442,11 +438,11 @@ def extract_table_from_one_page(html, tablenum, rowname):
 
     if tablenum >= len(tables):
         return i18n.trans(
-            'badParam.tableNum.tooBig',
-            'The maximum table number is {len_tables} for {rowname}',
-            {"n_tables": len(tables), "rowname": rowname}
+            "badParam.tableNum.tooBig",
+            "The maximum table number is {len_tables} for {rowname}",
+            {"n_tables": len(tables), "rowname": rowname},
         )
-        
+
     table = tables[tablenum]
 
     # pd.read_html() guarantees unique colnames
@@ -465,24 +461,26 @@ def extract_table(table, params):
     # first-use initialization.
     pd.io.html._importers()
 
-    tablenum = params['tablenum'] - 1  # 1-based for user
+    tablenum = params["tablenum"] - 1  # 1-based for user
 
     if tablenum < 0:
-        return i18n.trans('badParam.tablenum.negative', 'Table number must be at least 1')
+        return i18n.trans(
+            "badParam.tablenum.negative", "Table number must be at least 1"
+        )
 
     # Loop over rows of input html column, each of which is a complete html document
     # Concatenate rows extracted from each document.
     result_tables = []
     first_warning = None
-    for index, html in table['html'].iteritems():
+    for index, html in table["html"].iteritems():
         if html is None:
             continue
 
         # Use url for "name" of row if available, for error messages
-        if 'url' in table.columns:
-            rowname = table['url'].iloc[index]
+        if "url" in table.columns:
+            rowname = table["url"].iloc[index]
         else:
-            rowname = 'input html row ' + str(index+1)
+            rowname = "input html row " + str(index + 1)
 
         one_result = extract_table_from_one_page(html, tablenum, rowname)
 
@@ -500,46 +498,49 @@ def extract_table(table, params):
             return result
     else:
         if first_warning:
-            return first_warning # if nothing is extracted, warning becomes error
+            return first_warning  # if nothing is extracted, warning becomes error
         else:
             return pd.DataFrame()
 
 
 # ---- Main ----
 
+
 def render(table, params):
     # Suggest quickfix of adding Scrape HTML if 'html' col not found
-    inputcol = 'html'
+    inputcol = "html"
     if inputcol not in table.columns:
         return {
-            'message': i18n.trans('error.noHtml.error', "No 'html' column found. Do you need to scrape?"),
-            'quickFixes': [{
-                'text': i18n.trans('error.noHtml.quick_fix.text', 'Add HTML scraper'),
-                'action': 'prependModule',
-                'args': [
-                    'urlscraper',
-                    {}
-                ],
-            }]
+            "message": i18n.trans(
+                "error.noHtml.error", "No 'html' column found. Do you need to scrape?"
+            ),
+            "quickFixes": [
+                {
+                    "text": i18n.trans(
+                        "error.noHtml.quick_fix.text", "Add HTML scraper"
+                    ),
+                    "action": "prependModule",
+                    "args": ["urlscraper", {}],
+                }
+            ],
         }
 
-    method = params['method']
-    if method=='xpath':
+    method = params["method"]
+    if method == "xpath":
         return extract_xpath(table, params)
     else:
         return extract_table(table, params)
 
 
 def _migrate_v0_to_v1(params):
-    return {
-        **params,
-        'method': 'xpath',  # v0 had only xpath method
-        'tablenum': 1
-    }
+    return {**params, "method": "xpath", "tablenum": 1}  # v0 had only xpath method
+
 
 def migrate_params(params):
-    if 'method' not in params:
+    if "method" not in params:
         params = _migrate_v0_to_v1(params)
-    params.pop('first_row_is_header', None) # remove defunct key from a few early test wf
+    params.pop(
+        "first_row_is_header", None
+    )  # remove defunct key from a few early test wf
 
     return params

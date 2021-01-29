@@ -1,14 +1,14 @@
 # Greek translations for PROJECT.
-# Copyright (C) 2020 ORGANIZATION
+# Copyright (C) 2021 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-02-18 16:16+0000\n"
+"POT-Creation-Date: 2021-01-29 19:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: el\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.9.0\n"
 
 msgid "_spec.name"
 msgstr "Από HTML σε πίνακα"
@@ -55,48 +55,47 @@ msgstr "Πληκτρολογήστε το όνομα στήλης"
 msgid "ColumnExtractionError.message"
 msgstr "Σφάλμα XPath για τη στήλη \"{column_name}\": {error}"
 
-#: xpathextractor.py:179
+#: xpathextractor.py:183
 msgid "badParam.colname.missing"
 msgstr "Λείπει το όνομα της στήλης"
 
-#: xpathextractor.py:184
+#: xpathextractor.py:185
 msgid "badParam.colname.duplicate"
 msgstr "Διπλό όνομα στήλης \"{column_name}\""
 
-#: xpathextractor.py:190
+#: xpathextractor.py:191
 msgid "badParam.colxpath.missing"
 msgstr "Λείπει ο επιλογέας στήλης"
 
-#: xpathextractor.py:200
+#: xpathextractor.py:198
 msgid "badParam.colxpath.invalid"
 msgstr "Μη έγκυρη σύνταξη XPath για τη στήλη \"{column_name}\": {error}"
 
-#: xpathextractor.py:237
+#: xpathextractor.py:234
 msgid "warning.extractedDifferentLengths"
-msgstr ""
-"Έχει γίνει εξαγωγή στηλών διαφορετικού μήκους από το HTML της σειράς {row}"
+msgstr "Έχει γίνει εξαγωγή στηλών διαφορετικού μήκους από το HTML της σειράς {row}"
 
-#: xpathextractor.py:402
+#: xpathextractor.py:400
 msgid "error.noTable"
 msgstr "Δεν βρέθηκαν ετικέτες <table> στη σειρά {rowname}"
 
-#: xpathextractor.py:434
+#: xpathextractor.py:432
 msgid "error.noColumn"
 msgstr "Ο πίνακας δεν έχει στήλες στη σειρά {rowname}"
 
-#: xpathextractor.py:447
+#: xpathextractor.py:443
 msgid "badParam.tableNum.tooBig"
 msgstr "Ο μέγιστος αριθμός πίνακα είναι {len_tables} για τη σειρά {rowname}"
 
-#: xpathextractor.py:471
+#: xpathextractor.py:467
 msgid "badParam.tablenum.negative"
 msgstr "Ο αριθμός πίνακα πρέπει να είναι τουλάχιστον 1"
 
-#: xpathextractor.py:515
+#: xpathextractor.py:514
 msgid "error.noHtml.error"
 msgstr "Δεν βρέθηκε στήλη \"html\". Χρειάζεται να τη συλλέξεις από κάπου;"
 
-#: xpathextractor.py:517
+#: xpathextractor.py:519
 msgid "error.noHtml.quick_fix.text"
 msgstr "Προσθέστε Συλλέκτη HTML"
 
