@@ -1,0 +1,102 @@
+# Greek translations for PROJECT.
+# Copyright (C) 2020 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2020-02-18 16:16+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: el\n"
+"Language-Team: el <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.0\n"
+
+msgid "_spec.name"
+msgstr "Από HTML σε πίνακα"
+
+msgid "_spec.description"
+msgstr ""
+"Εξαγωγή πίνακα από κείμενο HTML χρησιμοποιώντας ετικέτες <table> ή "
+"επιλογείς XPath."
+
+msgid "_spec.parameters.method.name"
+msgstr "Μέθοδος"
+
+msgid "_spec.parameters.method.options.table.label"
+msgstr "Ετικέτες <table>"
+
+msgid "_spec.parameters.method.options.xpath.label"
+msgstr "Επιλογείς XPath"
+
+msgid "_spec.parameters.tablenum.name"
+msgstr "Ποιος πίνακας σε αυτή τη σελίδα;"
+
+msgid "_spec.parameters.colselectors.child_parameters.colxpath.name"
+msgstr "Επιλογέας XPath"
+
+msgid "_spec.parameters.colselectors.child_parameters.colxpath.placeholder"
+msgstr "Εισαγάγετε τον επιλογέα XPath"
+
+msgid "_spec.parameters.colselectors.child_parameters.colname.name"
+msgstr "Όνομα στήλης"
+
+msgid "_spec.parameters.colselectors.child_parameters.colname.placeholder"
+msgstr "Πληκτρολογήστε το όνομα στήλης"
+
+#: xpathextractor.py:24
+msgid "ColumnExtractionError.message"
+msgstr "Σφάλμα XPath για τη στήλη \"{column_name}\": {error}"
+
+#: xpathextractor.py:179
+msgid "badParam.colname.missing"
+msgstr "Λείπει το όνομα της στήλης"
+
+#: xpathextractor.py:184
+msgid "badParam.colname.duplicate"
+msgstr "Διπλό όνομα στήλης \"{column_name}\""
+
+#: xpathextractor.py:190
+msgid "badParam.colxpath.missing"
+msgstr "Λείπει ο επιλογέας στήλης"
+
+#: xpathextractor.py:200
+msgid "badParam.colxpath.invalid"
+msgstr "Μη έγκυρη σύνταξη XPath για τη στήλη \"{column_name}\": {error}"
+
+#: xpathextractor.py:237
+msgid "warning.extractedDifferentLengths"
+msgstr ""
+"Έχει γίνει εξαγωγή στηλών διαφορετικού μήκους από το HTML της σειράς {row}"
+
+#: xpathextractor.py:402
+msgid "error.noTable"
+msgstr "Δεν βρέθηκαν ετικέτες <table> στη σειρά {rowname}"
+
+#: xpathextractor.py:434
+msgid "error.noColumn"
+msgstr "Ο πίνακας δεν έχει στήλες στη σειρά {rowname}"
+
+#: xpathextractor.py:447
+msgid "badParam.tableNum.tooBig"
+msgstr "Ο μέγιστος αριθμός πίνακα είναι {len_tables} για τη σειρά {rowname}"
+
+#: xpathextractor.py:471
+msgid "badParam.tablenum.negative"
+msgstr "Ο αριθμός πίνακα πρέπει να είναι τουλάχιστον 1"
+
+#: xpathextractor.py:515
+msgid "error.noHtml.error"
+msgstr "Δεν βρέθηκε στήλη \"html\". Χρειάζεται να τη συλλέξεις από κάπου;"
+
+#: xpathextractor.py:517
+msgid "error.noHtml.quick_fix.text"
+msgstr "Προσθέστε Συλλέκτη HTML"
+

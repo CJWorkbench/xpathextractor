@@ -4,6 +4,7 @@ import warnings
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from xpathextractor import parse_document, select, xpath, render, migrate_params
+from cjwmodule.testing.i18n import i18n_message
 
 class UnittestRunnerThatDoesntAddWarningFilter(unittest.TextTestRunner):
     def __init(self, *args, **kwargs):
@@ -200,8 +201,8 @@ class XpathExtractorTest(unittest.TestCase):
 
         out = render(table, params)
         assert_frame_equal(out[0], expected)
-        self.assertEqual(out[1], (
-            'Extracted columns of differing lengths from HTML on row 2'
+        self.assertEqual(out[1], i18n_message(
+            "warning.extractedDifferentLengths", {"row": 2}
         ))
 
     def test_bad_html(self):
@@ -249,7 +250,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'p', 'colname':'Description'},
             ]}
         out = render(pd.DataFrame({'html':['<p>foo</p>']}), params)
-        self.assertEqual(out, 'Missing column selector')
+        self.assertEqual(out, i18n_message("badParam.colxpath.missing"))
 
     def test_empty_colname(self):
         # missing column name should error
@@ -261,7 +262,7 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'p', 'colname':''},
             ]}
         out = render(table, params)
-        self.assertEqual(out, 'Missing column name')
+        self.assertEqual(out, i18n_message("badParam.colname.missing"))
 
     def test_duplicate_colname(self):
         table = pd.DataFrame({'html':['<p>foo</p>']})
@@ -272,7 +273,10 @@ class XpathExtractorTest(unittest.TestCase):
                 {'colxpath':'//p', 'colname':'Title'},
             ]}
         out = render(table, params)
-        self.assertEqual(out, 'Duplicate column name "Title"')
+        self.assertEqual(out, i18n_message(
+            "badParam.colname.duplicate",
+            {"column_name": "Title"}
+        ))
 
     def test_bad_xpath(self):
         table = pd.DataFrame({'html':['<p>foo</p>']})
@@ -285,7 +289,10 @@ class XpathExtractorTest(unittest.TestCase):
         out = render(table, params)
         self.assertEqual(
             out,
-            'Invalid XPath syntax for column "Title": Invalid expression'
+            i18n_message(
+                "badParam.colxpath.invalid",
+                {"column_name": "Title", "error": "Invalid expression"}
+            )
         )
 
     def test_valid_xpath_eval_error(self):
@@ -299,7 +306,10 @@ class XpathExtractorTest(unittest.TestCase):
         out = render(table, params)
         self.assertEqual(
             out,
-            'XPath error for column "Title": Undefined namespace prefix'
+            i18n_message(
+                "ColumnExtractionError.message",
+                {"column_name": "Title", "error": "Undefined namespace prefix"}
+            )
         )
 
     def test_no_colselectors(self):
@@ -411,7 +421,10 @@ class TableExtractorTest(unittest.TestCase):
 
         self.assertTrue(isinstance(out, tuple))
         assert_frame_equal(out[0], pd.DataFrame({'B': [1,2,1,2], 'A':[2,3,2,3]}))
-        self.assertEqual(out[1], 'Did not find any <table> tags in input html row 2')
+        self.assertEqual(out[1], i18n_message(
+            'error.noTable',
+            {"rowname": "input html row 2"}
+        ))
 
     def test_multiple_input_rows_url_in_warning(self):
         # if there is a 'url' column it should appear in warning messages
@@ -426,7 +439,10 @@ class TableExtractorTest(unittest.TestCase):
 
         self.assertTrue(isinstance(out, tuple))
         assert_frame_equal(out[0], pd.DataFrame({'B': [1,2,1,2], 'A':[2,3,2,3]}))
-        self.assertEqual(out[1], 'Did not find any <table> tags in http://foo.com/b')
+        self.assertEqual(out[1], i18n_message(
+            'error.noTable',
+            {"rowname": "http://foo.com/b"}
+        ))
 
     def test_table_index_under(self):
         table = make_html_input(self.a_table_html)
@@ -436,7 +452,7 @@ class TableExtractorTest(unittest.TestCase):
             'tablenum':0
         }
         result = render(table, params)
-        self.assertEqual(result, 'Table number must be at least 1')
+        self.assertEqual(result, i18n_message('badParam.tablenum.negative'))
 
     def test_table_index_over(self):
         table = make_html_input(self.a_table_html)
@@ -446,11 +462,17 @@ class TableExtractorTest(unittest.TestCase):
             'tablenum':2
         }
         result = render(table, params)
-        self.assertEqual(result, 'The maximum table number is 1 for input html row 1')
-
+        self.assertEqual(result, i18n_message(
+            'badParam.tableNum.tooBig',
+            {"n_tables": 1, "rowname": "input html row 1"}
+        ))
+        
         table = make_html_input(self.a_table_html,url='http://foo.com')
         result = render(table, params)
-        self.assertEqual(result, 'The maximum table number is 1 for http://foo.com')
+        self.assertEqual(result, i18n_message(
+            'badParam.tableNum.tooBig',
+            {"n_tables": 1, "rowname": "http://foo.com"}
+        ))
 
     def test_only_some_colnames(self):
         # pandas read_table() does odd stuff when there are multiple commas at
@@ -478,7 +500,10 @@ class TableExtractorTest(unittest.TestCase):
     def test_no_tables(self):
         table = make_html_input('<html><body>No table</body></html>')
         result = render(table, defTableParams)        
-        self.assertEqual(result, 'Did not find any <table> tags in input html row 1')
+        self.assertEqual(result, i18n_message(
+            'error.noTable',
+            {"rowname": "input html row 1"}
+        ))
 
     def test_empty_str_is_empty_str(self):
         # Add two columns. pd.read_html() will not return an all-empty
@@ -496,7 +521,10 @@ class TableExtractorTest(unittest.TestCase):
     def test_empty_table(self):
         table = make_html_input('<html><body><table></table></body></html>')
         result = render(table, defTableParams)        
-        self.assertEqual(result, 'Did not find any <table> tags in input html row 1')
+        self.assertEqual(result, i18n_message(
+            'error.noTable',
+            {"rowname": "input html row 1"}
+        ))
 
     def test_header_only_table(self):
         table = make_html_input("""

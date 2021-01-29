@@ -1,0 +1,100 @@
+#. default-message: HTML to table
+msgid "_spec.name"
+msgstr ""
+
+#. default-message: Extract a table from HTML text using <table> tags or xpath selectors.
+msgid "_spec.description"
+msgstr ""
+
+#. default-message: Method
+msgid "_spec.parameters.method.name"
+msgstr ""
+
+#. default-message: <table> tags
+msgid "_spec.parameters.method.options.table.label"
+msgstr ""
+
+#. default-message: Xpath selectors
+msgid "_spec.parameters.method.options.xpath.label"
+msgstr ""
+
+#. default-message: Which table on this page?
+msgid "_spec.parameters.tablenum.name"
+msgstr ""
+
+#. default-message: XPath selector
+msgid "_spec.parameters.colselectors.child_parameters.colxpath.name"
+msgstr ""
+
+#. default-message: Enter xpath selector
+msgid "_spec.parameters.colselectors.child_parameters.colxpath.placeholder"
+msgstr ""
+
+#. default-message: Column name
+msgid "_spec.parameters.colselectors.child_parameters.colname.name"
+msgstr ""
+
+#. default-message: Enter column name
+msgid "_spec.parameters.colselectors.child_parameters.colname.placeholder"
+msgstr ""
+
+#. default-message: XPath error for column "{column_name}": {error}
+#: xpathextractor.py:24
+msgid "ColumnExtractionError.message"
+msgstr ""
+
+#. default-message: Missing column name
+#: xpathextractor.py:179
+msgid "badParam.colname.missing"
+msgstr ""
+
+#. default-message: Duplicate column name "{column_name}"
+#: xpathextractor.py:184
+msgid "badParam.colname.duplicate"
+msgstr ""
+
+#. default-message: Missing column selector
+#: xpathextractor.py:190
+msgid "badParam.colxpath.missing"
+msgstr ""
+
+#. default-message: Invalid XPath syntax for column "{column_name}": {error}
+#: xpathextractor.py:200
+msgid "badParam.colxpath.invalid"
+msgstr ""
+
+#. default-message: Extracted columns of differing lengths from HTML on row {row}
+#: xpathextractor.py:237
+msgid "warning.extractedDifferentLengths"
+msgstr ""
+
+#. default-message: Did not find any <table> tags in {rowname}
+#: xpathextractor.py:402
+msgid "error.noTable"
+msgstr ""
+
+#. default-message: Table has no columns in {rowname}
+#: xpathextractor.py:434
+msgid "error.noColumn"
+msgstr ""
+
+#. default-message: The maximum table number is {len_tables} for {rowname}
+#: xpathextractor.py:447
+msgid "badParam.tableNum.tooBig"
+msgstr ""
+
+#. default-message: Table number must be at least 1
+#: xpathextractor.py:471
+msgid "badParam.tablenum.negative"
+msgstr ""
+
+#. default-message: No 'html' column found. Do you need to scrape?
+#: xpathextractor.py:515
+msgid "error.noHtml.error"
+msgstr ""
+
+#. default-message: Add HTML scraper
+#: xpathextractor.py:517
+msgid "error.noHtml.quick_fix.text"
+msgstr ""
+
