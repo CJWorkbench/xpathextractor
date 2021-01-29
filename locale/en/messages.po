@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-01-29 19:08+0000\n"
+"POT-Creation-Date: 2021-01-29 19:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -49,51 +49,51 @@ msgstr "Column name"
 msgid "_spec.parameters.colselectors.child_parameters.colname.placeholder"
 msgstr "Enter column name"
 
-#: xpathextractor.py:24
+#: xpathextractor.py:25
 msgid "ColumnExtractionError.message"
 msgstr "XPath error for column \"{column_name}\": {error}"
 
-#: xpathextractor.py:183
+#: xpathextractor.py:184
 msgid "badParam.colname.missing"
 msgstr "Missing column name"
 
-#: xpathextractor.py:185
+#: xpathextractor.py:187
 msgid "badParam.colname.duplicate"
 msgstr "Duplicate column name \"{column_name}\""
 
-#: xpathextractor.py:191
+#: xpathextractor.py:195
 msgid "badParam.colxpath.missing"
 msgstr "Missing column selector"
 
-#: xpathextractor.py:198
+#: xpathextractor.py:204
 msgid "badParam.colxpath.invalid"
 msgstr "Invalid XPath syntax for column \"{column_name}\": {error}"
 
-#: xpathextractor.py:234
+#: xpathextractor.py:241
 msgid "warning.extractedDifferentLengths"
 msgstr "Extracted columns of differing lengths from HTML on row {row}"
 
-#: xpathextractor.py:400
+#: xpathextractor.py:325
 msgid "error.noTable"
 msgstr "Did not find any <table> tags in {rowname}"
 
-#: xpathextractor.py:432
+#: xpathextractor.py:358
 msgid "error.noColumn"
 msgstr "Table has no columns in {rowname}"
 
-#: xpathextractor.py:443
+#: xpathextractor.py:373
 msgid "badParam.tableNum.tooBig"
 msgstr "The maximum table number is {len_tables} for {rowname}"
 
-#: xpathextractor.py:467
+#: xpathextractor.py:397
 msgid "badParam.tablenum.negative"
 msgstr "Table number must be at least 1"
 
-#: xpathextractor.py:514
+#: xpathextractor.py:437
 msgid "error.noHtml.error"
 msgstr "No 'html' column found. Do you need to scrape?"
 
-#: xpathextractor.py:519
+#: xpathextractor.py:443
 msgid "error.noHtml.quick_fix.text"
 msgstr "Add HTML scraper"
 

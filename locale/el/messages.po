@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-01-29 19:08+0000\n"
+"POT-Creation-Date: 2021-01-29 19:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: el\n"
@@ -51,51 +51,51 @@ msgstr "Όνομα στήλης"
 msgid "_spec.parameters.colselectors.child_parameters.colname.placeholder"
 msgstr "Πληκτρολογήστε το όνομα στήλης"
 
-#: xpathextractor.py:24
+#: xpathextractor.py:25
 msgid "ColumnExtractionError.message"
 msgstr "Σφάλμα XPath για τη στήλη \"{column_name}\": {error}"
 
-#: xpathextractor.py:183
+#: xpathextractor.py:184
 msgid "badParam.colname.missing"
 msgstr "Λείπει το όνομα της στήλης"
 
-#: xpathextractor.py:185
+#: xpathextractor.py:187
 msgid "badParam.colname.duplicate"
 msgstr "Διπλό όνομα στήλης \"{column_name}\""
 
-#: xpathextractor.py:191
+#: xpathextractor.py:195
 msgid "badParam.colxpath.missing"
 msgstr "Λείπει ο επιλογέας στήλης"
 
-#: xpathextractor.py:198
+#: xpathextractor.py:204
 msgid "badParam.colxpath.invalid"
 msgstr "Μη έγκυρη σύνταξη XPath για τη στήλη \"{column_name}\": {error}"
 
-#: xpathextractor.py:234
+#: xpathextractor.py:241
 msgid "warning.extractedDifferentLengths"
 msgstr "Έχει γίνει εξαγωγή στηλών διαφορετικού μήκους από το HTML της σειράς {row}"
 
-#: xpathextractor.py:400
+#: xpathextractor.py:325
 msgid "error.noTable"
 msgstr "Δεν βρέθηκαν ετικέτες <table> στη σειρά {rowname}"
 
-#: xpathextractor.py:432
+#: xpathextractor.py:358
 msgid "error.noColumn"
 msgstr "Ο πίνακας δεν έχει στήλες στη σειρά {rowname}"
 
-#: xpathextractor.py:443
+#: xpathextractor.py:373
 msgid "badParam.tableNum.tooBig"
 msgstr "Ο μέγιστος αριθμός πίνακα είναι {len_tables} για τη σειρά {rowname}"
 
-#: xpathextractor.py:467
+#: xpathextractor.py:397
 msgid "badParam.tablenum.negative"
 msgstr "Ο αριθμός πίνακα πρέπει να είναι τουλάχιστον 1"
 
-#: xpathextractor.py:514
+#: xpathextractor.py:437
 msgid "error.noHtml.error"
 msgstr "Δεν βρέθηκε στήλη \"html\". Χρειάζεται να τη συλλέξεις από κάπου;"
 
-#: xpathextractor.py:519
+#: xpathextractor.py:443
 msgid "error.noHtml.quick_fix.text"
 msgstr "Προσθέστε Συλλέκτη HTML"
 

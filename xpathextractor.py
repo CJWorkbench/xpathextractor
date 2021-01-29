@@ -10,6 +10,7 @@ from lxml.html import html5parser
 import pandas as pd
 import re
 from cjwmodule import i18n
+from cjwmodule.util.colnames import gen_unique_clean_colnames_and_warn
 
 # ---- Xpath ----
 
@@ -180,28 +181,34 @@ def extract_xpath(table, params):
         colname = c["colname"]
         colxpath = c["colxpath"]
         if not colname:
-            return i18n.trans("badParam.colname.missing", "Missing column name")
+            return None, [i18n.trans("badParam.colname.missing", "Missing column name")]
         if colname in columns_to_parse:
-            return i18n.trans(
-                "badParam.colname.duplicate",
-                'Duplicate column name "{column_name}"',
-                {"column_name": colname},
-            )
+            return None, [
+                i18n.trans(
+                    "badParam.colname.duplicate",
+                    'Duplicate column name "{column_name}"',
+                    {"column_name": colname},
+                )
+            ]
         if not colxpath:
-            return i18n.trans("badParam.colxpath.missing", "Missing column selector")
+            return None, [
+                i18n.trans("badParam.colxpath.missing", "Missing column selector")
+            ]
         try:
             selector = xpath(c["colxpath"])
         except etree.XPathSyntaxError as err:
-            return i18n.trans(
-                "badParam.colxpath.invalid",
-                'Invalid XPath syntax for column "{column_name}": {error}',
-                {"column_name": colname, "error": str(err)},
-            )
+            return None, [
+                i18n.trans(
+                    "badParam.colxpath.invalid",
+                    'Invalid XPath syntax for column "{column_name}": {error}',
+                    {"column_name": colname, "error": str(err)},
+                )
+            ]
         columns_to_parse[colname] = selector
 
     if not columns_to_parse:
         # User hasn't input anything. Return input, as is our convention.
-        return table
+        return table, []
 
     # Loop over rows of input html column, each of which is a complete html document
     # Concatenate rows extracted from each document.
@@ -213,7 +220,7 @@ def extract_xpath(table, params):
         try:
             one_result, warn = extract_dataframe_by_zip(html, columns_to_parse)
         except ColumnExtractionError as err:
-            return err.i18n_message
+            return None, [err.i18n_message]
         result_tables.append(one_result)
         # track the first row where the extracted columns are not all the same
         # length
@@ -228,116 +235,31 @@ def extract_xpath(table, params):
             {colname: [] for colname in columns_to_parse.keys()}, dtype=str
         )
 
+    warnings = []
     if input_row_with_warning is not None:
-        return (
-            outtable,
+        warnings.append(
             i18n.trans(
                 "warning.extractedDifferentLengths",
                 "Extracted columns of differing lengths from HTML on row {row}",
                 {"row": input_row_with_warning + 1},
-            ),
+            )
         )
-    else:
-        return outtable
 
-
-# ---- Ripped from server/utils.py ----
-# Sigh. This is absurd. Either the host should do fixup of column names and types,
-# or we should have a module "standard library"/callbacks provided by server.
-
-
-def uniquize_colnames(colnames):
-    """
-    Yield colnames in one pass, renaming so no two names are alike.
-
-    The algorithm: Match each colname against "Column Name 2": everything up to
-    ending digits is the 'key' and the ending digits are the 'number'. Maintain
-    a blacklist of numbers, for each key; when a key+number have been seen,
-    find the first _free_ number with that key to construct a new column name.
-
-    This algorithm is ... generic. It's useful if we know nothing at all about
-    the columns and no column names are "important" or "to-keep-unchanged".
-    """
-    blacklist = {}  # key => set of numbers
-    regex = re.compile(r"\A(.*?) (\d+)\Z")
-    for colname in colnames:
-        # Find key and num
-        match = regex.fullmatch(colname)
-        if match:
-            key = match.group(1)
-            num = int(match.group(2))
-        else:
-            key = colname
-            num = 1
-
-        used_nums = blacklist.setdefault(key, set())
-        if num in used_nums:
-            # Theoretically this could raise StopIteration ... but what
-            # _should_ we do when we have so many columns?
-            num = next(n for n in range(1, 9999999) if n not in used_nums)
-        used_nums.add(num)
-
-        if not match and num == 1:
-            # Common case: yield the original name
-            yield key
-        else:
-            # Yield a unique name
-            # The original colname had a number; the one we _output_ must also
-            # have a number.
-            yield key + " " + str(num)
+    return outtable, warnings
 
 
 def autocast_series_dtype(series: pd.Series):
-    """
-    Cast any sane Series to str/category[str]/number/datetime.
-
-    This is appropriate when parsing CSV data or Excel data. It _seems_
-    appropriate when a search-and-replace produces numeric columns like
-    '$1.32' => '1.32' ... but perhaps that's only appropriate in very-specific
-    cases.
-
-    The input must be "sane": if the dtype is object or category, se assume
-    _every value_ is str (or null).
+    """Cast a str Series to str/number.
 
     If the series is all-null, do nothing.
-
-    Avoid spurious calls to this function: it's expensive.
-
-    TODO handle dates and maybe booleans.
     """
-    if series.dtype == object:
-        nulls = series.isnull()
-        if (nulls | (series == "")).all():
-            return series
-        try:
-            # If it all looks like numbers (like in a CSV), cast to number.
-            return pd.to_numeric(series)
-        except (ValueError, TypeError):
-            # Otherwise, we want all-string. Is that what we already have?
-            #
-            # TODO assert that we already have all-string, and nix this
-            # spurious conversion.
-            array = series[~nulls].array
-            if any(type(x) != str for x in array):
-                series = series.astype(str)
-                series[nulls] = None
-            return series
-    elif hasattr(series, "cat"):
-        # Categorical series. Try to infer type of series.
-        #
-        # Assume categories are all str: after all, we're assuming the input is
-        # "sane" and "sane" means only str categories are valid.
-        if (series.isnull() | (series == "")).all():
-            return series
-        try:
-            return pd.to_numeric(series)
-        except (ValueError, TypeError):
-            # We don't cast categories to str here -- because we have no
-            # callers that would create categories that aren't all-str. If we
-            # ever do, this is where we should do the casting.
-            return series
-    else:
-        assert is_numeric_dtype(series) or is_datetime64_dtype(series)
+    nulls = series.isnull()
+    if (nulls | (series == "")).all():
+        return series
+    try:
+        # If it all looks like numbers (like in a CSV), cast to number.
+        return pd.to_numeric(series)
+    except (ValueError, TypeError):
         return series
 
 
@@ -358,7 +280,7 @@ def autocast_dtypes_in_place(table: pd.DataFrame) -> None:
         table[colname] = autocast_series_dtype(column)
 
 
-def merge_colspan_headers_in_place(table) -> None:
+def merge_colspan_headers_in_place(table, *, settings) -> List[tuple]:
     """
     Turn tuple colnames into strings.
 
@@ -386,17 +308,20 @@ def merge_colspan_headers_in_place(table) -> None:
         elif isinstance(c, int):
             # If first row isn't header and there's no <thead>, table.columns
             # will be an integer index.
-            newcols.append("Column %d" % (c + 1))
+            newcols.append("")  # gen_unique_clean_colnames_and_warn() will reset it
         else:
             newcols.append(c)
     # newcols can contain duplicates. Rename them.
-    table.columns = list(uniquize_colnames(newcols))
+    table.columns, warnings = gen_unique_clean_colnames_and_warn(
+        newcols, settings=settings
+    )
+    return warnings
 
 
 # ---- Tables ----
 
 # This is applied to each row of our input
-def extract_table_from_one_page(html, tablenum, rowname):
+def extract_table_from_one_page(html, tablenum, rowname, *, settings):
     error_no_table = i18n.trans(
         "error.noTable",
         "Did not find any <table> tags in {rowname}",
@@ -426,37 +351,41 @@ def extract_table_from_one_page(html, tablenum, rowname):
             dtype=str,  # do not autoconvert
         )
     except ValueError:
-        return error_no_table
+        return None, [error_no_table]
     except IndexError:
         # pandas.read_html() gives this unhelpful error message....
-        return i18n.trans(
-            "error.noColumn", "Table has no columns in {rowname}", {"rowname": rowname}
-        )
+        return None, [
+            i18n.trans(
+                "error.noColumn",
+                "Table has no columns in {rowname}",
+                {"rowname": rowname},
+            )
+        ]
 
     if not tables:
-        return error_no_table
+        return None, [error_no_table]
 
     if tablenum >= len(tables):
-        return i18n.trans(
-            "badParam.tableNum.tooBig",
-            "The maximum table number is {len_tables} for {rowname}",
-            {"n_tables": len(tables), "rowname": rowname},
-        )
+        return None, [
+            i18n.trans(
+                "badParam.tableNum.tooBig",
+                "The maximum table number is {len_tables} for {rowname}",
+                {"n_tables": len(tables), "rowname": rowname},
+            )
+        ]
 
     table = tables[tablenum]
 
-    # pd.read_html() guarantees unique colnames
-    merge_colspan_headers_in_place(table)
+    warnings = merge_colspan_headers_in_place(table, settings=settings)
 
-    autocast_dtypes_in_place(table)
     if len(table) == 0:
         # read_html() produces an empty Index. We want a RangeIndex.
         table.reset_index(drop=True, inplace=True)
-    return table
+    return table, warnings
 
 
 # Extract contents of <table> tag
-def extract_table(table, params):
+def extract_table(table, params, *, settings):
     # We delve into pd.read_html()'s innards, above. Part of that means some
     # first-use initialization.
     pd.io.html._importers()
@@ -464,14 +393,14 @@ def extract_table(table, params):
     tablenum = params["tablenum"] - 1  # 1-based for user
 
     if tablenum < 0:
-        return i18n.trans(
-            "badParam.tablenum.negative", "Table number must be at least 1"
-        )
+        return None, [
+            i18n.trans("badParam.tablenum.negative", "Table number must be at least 1")
+        ]
 
     # Loop over rows of input html column, each of which is a complete html document
     # Concatenate rows extracted from each document.
     result_tables = []
-    first_warning = None
+    warnings = []
     for index, html in table["html"].iteritems():
         if html is None:
             continue
@@ -482,54 +411,50 @@ def extract_table(table, params):
         else:
             rowname = "input html row " + str(index + 1)
 
-        one_result = extract_table_from_one_page(html, tablenum, rowname)
-
-        if isinstance(one_result, i18n.I18nMessage):
-            if not first_warning:
-                first_warning = one_result
-        else:
+        one_result, one_page_warnings = extract_table_from_one_page(
+            html, tablenum, rowname, settings=settings
+        )
+        if one_result is not None:
             result_tables.append(one_result)
+        if not warnings and one_page_warnings:  # only report _first_ page of warnings
+            warnings = one_page_warnings
 
     if result_tables:
         result = pd.concat(result_tables, ignore_index=True, sort=False)
-        if first_warning:
-            return (result, first_warning)
-        else:
-            return result
+        autocast_dtypes_in_place(result)
     else:
-        if first_warning:
-            return first_warning  # if nothing is extracted, warning becomes error
-        else:
-            return pd.DataFrame()
+        result = None
+
+    return result, warnings
 
 
-# ---- Main ----
-
-
-def render(table, params):
+def render(table, params, *, settings):
     # Suggest quickfix of adding Scrape HTML if 'html' col not found
     inputcol = "html"
     if inputcol not in table.columns:
-        return {
-            "message": i18n.trans(
-                "error.noHtml.error", "No 'html' column found. Do you need to scrape?"
-            ),
-            "quickFixes": [
-                {
-                    "text": i18n.trans(
-                        "error.noHtml.quick_fix.text", "Add HTML scraper"
-                    ),
-                    "action": "prependModule",
-                    "args": ["urlscraper", {}],
-                }
-            ],
-        }
+        return None, [
+            {
+                "message": i18n.trans(
+                    "error.noHtml.error",
+                    "No 'html' column found. Do you need to scrape?",
+                ),
+                "quickFixes": [
+                    {
+                        "text": i18n.trans(
+                            "error.noHtml.quick_fix.text", "Add HTML scraper"
+                        ),
+                        "action": "prependModule",
+                        "args": ["urlscraper", {}],
+                    }
+                ],
+            }
+        ]
 
     method = params["method"]
     if method == "xpath":
         return extract_xpath(table, params)
     else:
-        return extract_table(table, params)
+        return extract_table(table, params, settings=settings)
 
 
 def _migrate_v0_to_v1(params):
